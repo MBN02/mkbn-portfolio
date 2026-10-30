@@ -1,0 +1,39 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import CertificationShowcase from '@/components/certifications/CertificationShowcase';
+import { certifications } from '@/data/certifications';
+import { profile } from '@/data/profile';
+---
+
+<BaseLayout
+  title="Verified Certifications — CNCF Kubestronaut, GCP Architect & Azure DevOps"
+  description="Verified digital credentials of Mohan Kumar BN — CNCF Certified Kubestronaut (CKA, CKS, CKAD, KCNA, KCSA, PCA), Google Cloud Professional Cloud Architect & Security Engineer, Microsoft DevOps Expert (AZ-400), and HashiCorp Terraform Associate."
+>
+  <section class="py-14 sm:py-20">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div class="max-w-3xl">
+        <span class="section-badge">CERTIFICATIONS // VERIFIED CREDLY CREDENTIALS</span>
+        <h1 class="mt-4 text-4xl font-extrabold tracking-tight text-slate-50 sm:text-5xl">
+          Verified Cloud &amp; Kubernetes Accreditations
+        </h1>
+        <p class="mt-4 text-base sm:text-lg leading-relaxed text-slate-400">
+          All {certifications.length} credentials displayed below are backed by official digital badges
+          and direct verification links on <a
+            href={profile.credlyUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="text-accent-cyan underline">Credly</a
+          >.
+        </p>
+      </div>
+
+      <div class="mt-10">
+        <CertificationShowcase
+          client:load
+          certifications={certifications}
+          credlyProfileUrl={profile.credlyUrl}
+        />
+      </div>
+    </div>
+  </section>
+</BaseLayout>

@@ -1,0 +1,129 @@
+---
+title: 'Enterprise Multi-Cluster Red Hat OpenShift & Virtualization Platform'
+subtitle: 'Converged container and virtual machine orchestration with zero-downtime HA lifecycle gates and Veeam Kasten disaster recovery'
+category: 'Enterprise OpenShift Platform'
+order: 1
+featured: true
+role: 'Senior Platform Engineer — Architecture & Day-2 Operations Owner'
+environmentScope: 'Multiple On-Premises Production & Non-Production Red Hat OpenShift 4 Clusters'
+problemStatement: 'Enterprise application teams were operating across fragmented legacy hypervisors and isolated container clusters, leading to inconsistent security postures, risky maintenance windows during cluster upgrades, and manual day-2 operational toil.'
+businessContext: 'Business-critical manufacturing and enterprise workloads required a unified, highly available on-premises application platform capable of running both modernized cloud-native microservices and traditional virtual machines under a single governance, security, and disaster recovery model.'
+architectureSummary: 'Engineered a multi-cluster Red Hat OpenShift 4 platform integrating OpenShift Virtualization (KubeVirt), automated MachineConfigPool (MCP) rolling upgrade gates, multi-tenant RBAC/SCC/NetworkPolicy isolation, full-stack Prometheus/Loki telemetry, and policy-driven Veeam Kasten K10 backup and disaster recovery.'
+mermaidDiagram: |
+  flowchart LR
+    subgraph Ingress["HA Edge & Identity"]
+      LB["HA Load Balancers\n(VIP / Ingress Router)"]
+      SSO["Enterprise OAuth / SSO\n(GroupSync + RBAC)"]
+    end
+    subgraph OCP["Red Hat OpenShift Multi-Cluster Control & Data Plane"]
+      CP["3-Node Control Plane\n(Stacked etcd + API)"]
+      MCP1["Worker MCP: Microservices\n(Restricted SCC + Quotas)"]
+      MCP2["Worker MCP: OpenShift Virt\n(KubeVirt VM Workloads)"]
+    end
+    subgraph Ops["Day-2 Resilience & Governance"]
+      GitOps["OpenShift GitOps\n(Argo CD Cluster Config)"]
+      Obs["Prometheus + Grafana + Loki\n(SLO & Drain Telemetry)"]
+      Kasten["Veeam Kasten K10\n(Immutable S3 DR Snapshots)"]
+    end
+    LB --> MCP1 & MCP2
+    SSO --> CP
+    CP --> MCP1 & MCP2
+    GitOps --> CP
+    MCP1 & MCP2 --> Obs
+    MCP1 & MCP2 --> Kasten
+topologyNodes:
+  - stage: '01 // Identity & Edge'
+    component: 'Corporate SSO + HA Router'
+    detail: 'Enterprise OIDC/OAuth authentication with automated GroupSync and least-privilege RBAC, replacing bootstrap kubeadmin access.'
+  - stage: '02 // Converged Compute'
+    component: 'Pods + OpenShift Virtualization'
+    detail: 'Unified scheduling of stateless/stateful containers alongside KubeVirt virtual machines on bare-metal RHCOS worker nodes.'
+  - stage: '03 // Upgrade Guardrails'
+    component: 'MachineConfigPool (MCP) Gates'
+    detail: 'Controlled rolling upgrades using Worker MCP pausing, PodDisruptionBudget verification, and 10-minute telemetry soak windows.'
+  - stage: '04 // Data Protection'
+    component: 'Veeam Kasten K10 DR'
+    detail: 'Application-consistent CSI snapshots for PVCs and virtual machines exported to immutable off-cluster object storage.'
+keyDecisions:
+  - decision: 'Converge Virtual Machines onto OpenShift Virtualization (KubeVirt) rather than maintaining separate VMware silos'
+    rationale: 'Allowed application teams to migrate legacy VMs at their own pace while immediately gaining GitOps declarative management, unified NetworkPolicies, and Kasten backup policies.'
+    tradeoff: 'Required dedicated bare-metal worker sizing, bridge networking tuning, and storage class IOPS engineering.'
+  - decision: 'Implement the Worker MCP Pausing Pattern with 10-minute soak gates during HA cluster upgrades'
+    rationale: 'Standard unthrottled node drains can trigger cascading pod evictions or hit the 2-worker drain trap if PodDisruptionBudgets are misconfigured.'
+    tradeoff: 'Slightly longer total maintenance window duration in exchange for zero application downtime and deterministic rollback checkpoints.'
+  - decision: 'Enforce tenant isolation via custom Security Context Constraints (SCCs) and default-deny NetworkPolicies'
+    rationale: 'Multi-tenant enterprise clusters host workloads from dozens of business units; strict namespace boundaries prevent noisy-neighbor resource starvation and lateral movement.'
+    tradeoff: 'Upfront onboarding validation required via golden-path templates so legacy containers do not expect root UID execution.'
+securityConsiderations:
+  - 'Removed bootstrap kubeadmin credentials and integrated corporate SSO with group-based ClusterRole and RoleBinding automation.'
+  - 'Enforced least-privilege Security Context Constraints (restricted-v2) preventing privileged containers, hostNetwork, or root escalation.'
+  - 'Partnered with security teams to integrate Wiz CNAPP for continuous posture management, vulnerability detection, and compliance auditing.'
+  - 'Implemented namespace-level NetworkPolicies, ResourceQuotas, and LimitRanges across all tenant environments.'
+reliabilityConsiderations:
+  - 'Engineered a 6-stage Zero-Downtime HA Upgrade runbook: Pre-Check Gate, Worker MCP Pause, Control Plane Rolling Upgrade, Controlled Worker Cordoning, 10-Minute Soak Window, and DR Snapshot Verification.'
+  - 'Configured Veeam Kasten K10 policies for automated backup and регулярно rehearsed restore procedures for both persistent container volumes and virtualized workloads.'
+  - 'Established proactive capacity and bottleneck analysis across CPU, memory, storage IOPS, and OVN-Kubernetes networking layers.'
+outcomes:
+  - metric: 'Zero Downtime'
+    description: 'Executed production multi-node OpenShift HA control-plane and worker upgrades with zero unscheduled workload outages.'
+  - metric: 'Unified Platform'
+    description: 'Consolidated containerized microservices and virtualized legacy workloads onto a single GitOps-managed OpenShift control plane.'
+  - metric: 'Verified DR'
+    description: 'Automated backup and disaster recovery readiness across stateful Kubernetes applications and OpenShift Virtualization VMs via Veeam Kasten.'
+technologies:
+  - 'Red Hat OpenShift 4'
+  - 'OpenShift Virtualization (KubeVirt)'
+  - 'RHCOS'
+  - 'OpenShift GitOps (Argo CD)'
+  - 'Veeam Kasten K10'
+  - 'Wiz CNAPP'
+  - 'Prometheus'
+  - 'Grafana'
+  - 'Loki'
+  - 'RBAC & SCCs'
+githubUrl: 'https://github.com/mkbntech/openshift-administrator'
+relatedVideoUrl: 'https://www.youtube.com/watch?v=wXSIgwyIRaI'
+relatedVideoTitle: 'The Zero Downtime Production OpenShift HA Cluster Upgrade!'
+---
+
+## Engineering Challenge & Operational Context
+
+Operating Red Hat OpenShift in an enterprise on-premises environment demands far more than standing up a cluster. When dozens of application teams rely on shared production and non-production clusters for business-critical services, platform engineering must solve three interlocking challenges:
+
+1. **Zero-Downtime Lifecycle Management**: Upgrading control-plane operators, Red Hat Enterprise Linux CoreOS (RHCOS) kernel versions, and worker nodes without disrupting live production traffic or getting stuck in MachineConfigPool drain deadlocks.
+2. **Workload Modernization Without Silos**: Supporting traditional virtual machine workloads alongside cloud-native microservices without forcing teams to manage two completely separate infrastructure stacks.
+3. **Multi-Tenant Security & Disaster Recovery**: Guaranteeing strict tenant isolation (compute quotas, network micro-segmentation, non-root execution) and rapid, verified recovery of stateful data.
+
+## Architectural Implementation
+
+### 1. Defensive HA Upgrade Engineering (The 6-Gate Pattern)
+
+To eliminate upgrade-induced incidents, I engineered a defensive upgrade protocol around OpenShift's **Cluster Version Operator (CVO)** and **MachineConfigDaemon (MCD)**:
+
+```bash
+# 1. Pre-Check Gate: Verify ClusterOperators, etcd quorum, and PDB health
+oc get clusterversion,clusteroperators
+oc get pdb -A | awk '$4 == 0 {print $0}'
+
+# 2. Pause Worker MachineConfigPool to decouple control-plane and worker reboots
+oc patch mcp worker --type merge -p '{"spec":{"paused":true}}'
+
+# 3. Trigger Control Plane Upgrade and monitor rolling API/etcd convergence
+oc adm upgrade --to=<target_version>
+```
+
+By pausing the `worker` MachineConfigPool during control-plane upgrades and unpausing workers in controlled batches with a **10-minute Prometheus/Loki soak window**, we prevent simultaneous node drains from overwhelming application replica counts.
+
+### 2. Converged Container & Virtual Machine Architecture
+
+Using **OpenShift Virtualization (KubeVirt)**, virtual machines are managed as native Kubernetes custom resources (`VirtualMachine` and `VirtualMachineInstance`) scheduled alongside standard Pods. Both workload types share:
+
+- Declarative lifecycle management through **OpenShift GitOps (Argo CD)**.
+- Unified observability pipelines via **Prometheus, Grafana, and Loki**.
+- Policy-driven snapshot and disaster recovery protection via **Veeam Kasten K10**.
+
+### 3. Enterprise Guardrails, Wiz CNAPP & Day-2 Automation
+
+- **Identity & Access**: Replaced static cluster-admin credentials with corporate SSO identity providers and automated RBAC group bindings.
+- **Posture Management**: Integrated **Wiz CNAPP** across clusters to continuously detect configuration drift, CVE exposure, and compliance gaps.
+- **Self-Service Standards**: Published golden-path Helm/Kustomize templates enforcing startup, liveness, and readiness probes, `restricted-v2` Security Context Constraints, and explicit CPU/memory requests and limits.

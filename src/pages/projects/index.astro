@@ -1,0 +1,49 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import ProjectCatalog from '@/components/projects/ProjectCatalog';
+import { getCollection } from 'astro:content';
+
+const allProjects = await getCollection('projects');
+const sortedProjects = allProjects
+  .sort((a, b) => a.data.order - b.data.order)
+  .map((entry) => ({
+    slug: entry.slug,
+    title: entry.data.title,
+    subtitle: entry.data.subtitle,
+    category: entry.data.category,
+    role: entry.data.role,
+    environmentScope: entry.data.environmentScope,
+    problemStatement: entry.data.problemStatement,
+    architectureSummary: entry.data.architectureSummary,
+    outcomes: entry.data.outcomes,
+    technologies: entry.data.technologies,
+    githubUrl: entry.data.githubUrl,
+    relatedVideoUrl: entry.data.relatedVideoUrl,
+    featured: entry.data.featured,
+  }));
+---
+
+<BaseLayout
+  title="Engineering Case Studies & Platform Architectures"
+  description="Real-world platform engineering case studies by Mohan Kumar BN — covering enterprise Red Hat OpenShift, Port IDP, serverless GitOps CI/CD, HashiCorp Vault & ESO, Autonomous AI SRE Crew, and Multi-Cloud IaC."
+>
+  <section class="py-14 sm:py-20">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div class="max-w-3xl">
+        <span class="section-badge">PROJECTS // ARCHITECTURAL CASE STUDIES</span>
+        <h1 class="mt-4 text-4xl font-extrabold tracking-tight text-slate-50 sm:text-5xl">
+          Engineering Case Studies
+        </h1>
+        <p class="mt-4 text-base sm:text-lg leading-relaxed text-slate-400">
+          Deep-dive architectural breakdowns detailing the engineering problems, system topologies,
+          key design decisions, security and reliability guardrails, and verified outcomes across
+          enterprise platforms and open-source implementations.
+        </p>
+      </div>
+
+      <div class="mt-10">
+        <ProjectCatalog client:load projects={sortedProjects} />
+      </div>
+    </div>
+  </section>
+</BaseLayout>

@@ -1,0 +1,66 @@
+---
+title: 'Supercharge Kubernetes Operations with kubectl-ai and Local Ollama LLMs'
+description: "Integrate Google's open-source kubectl-ai plugin with local Ollama Large Language Models to synthesize Kubernetes manifests, inspect live clusters, and accelerate SRE workflows without external data leakage."
+publishedAt: '2025-12-27'
+updatedAt: '2026-02-16'
+category: 'SRE & AI Ops'
+tags: ['kubernetes', 'AI', 'kubectl-ai', 'ollama', 'sre']
+readingTime: '7 min read'
+featured: true
+canonicalUrl: 'https://www.mkbntech.com/posts/kubectl-ai/'
+youtubeVideoId: 'U4wzenY9Dfo'
+githubRepoUrl: 'https://github.com/mkbntech/kubectl-ai-demo'
+architectureDiagram: |
+  flowchart LR
+    Eng["Platform Engineer\n(Terminal CLI)"] -->|"Natural Language Prompt"| KubectlAI["kubectl-ai Plugin\n(Kubeconfig Context)"]
+    KubectlAI <-->|"Local HTTP Inference"| Ollama["Ollama Local LLM\n(Qwen2.5-Coder / Llama3)"]
+    KubectlAI -->|"Human-in-the-Loop Approval"| APIServer["Kubernetes API Server\n(Manifest Apply / Diagnostics)"]
+---
+
+## Why Local AI for Kubernetes Operations?
+
+`kubectl-ai` is an open-source Kubernetes CLI assistant that translates natural-language engineering intent into accurate Kubernetes manifests and `kubectl` diagnostic operations. By pairing `kubectl-ai` with a **self-hosted Ollama server**, platform engineers gain an AI copilot while keeping cluster topologies, namespace structures, and logs 100% inside their local or enterprise network perimeter.
+
+## Architecture & Workflow
+
+1. **Intent Parsing**: You invoke `kubectl ai` from your terminal with a operational prompt (for example, debugging a failing service or scaffolding a NetworkPolicy).
+2. **Context-Aware Synthesis**: `kubectl-ai` inspects the relevant Kubernetes API schema and queries your local **Ollama** model (`qwen2.5-coder` or `llama3`).
+3. **Human-in-the-Loop Confirmation**: Before any mutating command runs against the cluster, `kubectl-ai` presents the generated plan or YAML diff and waits for explicit engineer confirmation.
+
+## Step-by-Step Implementation
+
+### 1. Start the Local Ollama Model Server
+
+```bash
+# Install and start Ollama locally or on your GPU workstation
+curl -fsSL https://ollama.com/install.sh | sh
+
+# Pull a code-specialized open weights model
+ollama pull qwen2.5-coder:7b
+ollama list
+```
+
+### 2. Install `kubectl-ai` and Bind to Ollama
+
+```bash
+# Configure kubectl-ai to use the local Ollama provider
+export OLLAMA_HOST="http://localhost:11434"
+
+# Run an interactive diagnostic query against your current kubeconfig context
+kubectl ai --llm-provider=ollama \
+  --model=qwen2.5-coder:7b \
+  "Find all pods not in Running state across all namespaces and explain why they are failing"
+```
+
+### 3. Generating Hardened Production Manifests
+
+```bash
+kubectl ai --llm-provider=ollama \
+  --model=qwen2.5-coder:7b \
+  "Create a production NGINX deployment in namespace web-prod with 3 replicas, non-root securityContext, readiness probe on port 8080, and CPU/memory limits"
+```
+
+## Production Takeaways
+
+- **Never Bypass Confirmation**: Keep interactive approval enabled (`--require-confirmation`) when operating against staging or production contexts.
+- **Pair with Least-Privilege RBAC**: Bind diagnostic AI sessions to read-only Kubernetes `ClusterRole` contexts (`view`) so exploratory troubleshooting cannot accidentally mutate cluster state.

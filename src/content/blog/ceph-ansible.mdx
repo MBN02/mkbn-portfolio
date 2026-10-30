@@ -1,0 +1,57 @@
+---
+title: 'Install an External Ceph Distributed Storage Cluster Using Ansible'
+description: 'Provision a self-healing, multi-node Ceph distributed storage cluster with Ansible to deliver replicated block (RBD), shared file (CephFS), and object storage for Kubernetes.'
+publishedAt: '2025-12-21'
+category: 'Storage & Networking'
+tags: ['ceph', 'storage', 'ansible', 'kubernetes', 'high-availability']
+readingTime: '8 min read'
+featured: false
+canonicalUrl: 'https://www.mkbntech.com/posts/ceph-ansible/'
+youtubeVideoId: '5ze73hRDamU'
+architectureDiagram: |
+  flowchart LR
+    K8s["Kubernetes / OpenShift\n(Ceph CSI Driver)"] -->|"RBD & CephFS"| MON["3x Ceph Monitors (MON)\n& Managers (MGR)"]
+    MON --> OSD1["Ceph Node 01\n(OSD Raw NVMe Disks)"]
+    MON --> OSD2["Ceph Node 02\n(OSD Raw NVMe Disks)"]
+    MON --> OSD3["Ceph Node 03\n(OSD Raw NVMe Disks)"]
+---
+
+## Why External Ceph for Enterprise Platforms?
+
+**Ceph** delivers unified, software-defined block (**RBD**), file (**CephFS**), and S3-compatible object (**RGW**) storage with automatic CRUSH-map placement and self-healing replication. Running an external Ceph cluster allows multiple Kubernetes and OpenShift clusters to share a high-performance storage pool with zero single points of failure.
+
+## Prerequisites & Node Layout
+
+- **3x Ubuntu Storage Nodes**: Each equipped with an OS boot disk and dedicated unformatted raw block devices (`/dev/sdb`, `/dev/sdc`) for Ceph OSDs.
+- **Network Separation**: Public client network (`192.168.10.0/24`) and cluster replication network for OSD heartbeat and recovery traffic.
+
+## Automated Deployment with Ansible (`cephadm` / Ansible Roles)
+
+### 1. Prepare Storage Nodes & Bootstrap Ceph Monitor
+
+```bash
+# Run Ansible pre-flight playbook to configure NTP, SSH keys, and LVM prerequisites
+ansible-playbook -i hosts.ini ceph-preflight.yml
+
+# Bootstrap the primary Ceph Monitor & Dashboard
+cephadm bootstrap \
+  --mon-ip 192.168.10.41 \
+  --cluster-network 192.168.20.0/24 \
+  --single-host-defaults
+```
+
+### 2. Enroll OSD Hosts and Provision Kubernetes Storage Pools
+
+```bash
+# Add storage hosts and automatically consume available raw disks as OSDs
+ceph orch host add ceph-node-02 192.168.10.42 --labels _admin,osd
+ceph orch host add ceph-node-03 192.168.10.43 --labels _admin,osd
+ceph orch apply osd --all-available-devices
+
+# Create replicated RBD pool for Kubernetes PersistentVolumes
+ceph osd pool create k8s-rbd-pool 128 128
+rbd pool init k8s-rbd-pool
+ceph -s
+```
+
+Once `HEALTH_OK` is achieved, generate a scoped Cephx client key (`ceph auth get-or-create client.kube`) and bind it to the Kubernetes **Ceph-CSI** `StorageClass` for dynamic `ReadWriteOnce` and `ReadWriteMany` volume provisioning.

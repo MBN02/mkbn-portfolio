@@ -1,0 +1,42 @@
+---
+title: 'Kubernetes Cluster Deployment with Ansible'
+description: 'Automate the end-to-end provisioning of a multi-node Kubernetes cluster (containerd runtime, kubeadm control plane, Calico CNI, and worker registration) using Ansible.'
+publishedAt: '2025-11-15'
+category: 'Infrastructure Automation'
+tags: ['ansible', 'kubernetes', 'automation', 'iac', 'calico']
+readingTime: '7 min read'
+featured: false
+canonicalUrl: 'https://www.mkbntech.com/posts/k8s-with-ansible/'
+youtubeVideoId: 'qAs_BKX5YoM'
+githubRepoUrl: 'https://github.com/mkbntech/k8s-cluster-with-ansible'
+---
+
+## Zero-Touch Kubernetes Cluster Bootstrapping
+
+Manually configuring kernel modules, sysctl bridging parameters, containerd `SystemdCgroup`, and `kubeadm` join tokens across multiple Linux hosts is error-prone. Using **Ansible**, we codify the entire cluster lifecycle into repeatable roles.
+
+## Playbook Architecture (`k8s-cluster-with-ansible`)
+
+1. **OS Pre-Flight Role (`prereq`)**: Disables swap, loads `overlay` and `br_netfilter` kernel modules, and enables IPv4 packet forwarding.
+2. **Container Runtime Role (`containerd`)**: Installs `containerd`, generates `/etc/containerd/config.toml`, and enables `SystemdCgroup = true`.
+3. **Control Plane Role (`master`)**: Runs `kubeadm init`, configures `~/.kube/config`, installs the **Calico CNI** network plugin, and captures the join command.
+4. **Worker Node Role (`worker`)**: Executes the dynamically generated `kubeadm join` token across all worker hosts.
+
+## Key Ansible Task Snippet
+
+```yaml
+- name: Initialize Kubernetes Control Plane with kubeadm
+  ansible.builtin.command: >
+    kubeadm init
+    --pod-network-cidr=192.168.0.0/16
+    --apiserver-advertise-address={{ ansible_default_ipv4.address }}
+  args:
+    creates: /etc/kubernetes/admin.conf
+
+- name: Generate Worker Join Command
+  ansible.builtin.command: kubeadm token create --print-join-command
+  register: kubernetes_join_command
+  changed_when: false
+```
+
+Run `ansible-playbook -i inventory site.yml` to stand up a clean, CNI-ready Kubernetes cluster in under five minutes.

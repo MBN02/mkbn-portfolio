@@ -1,0 +1,96 @@
+---
+title: 'Multi-Cloud Foundation & Fleet-Scale Kubernetes Automation'
+subtitle: 'Standardizing 60+ Kubernetes clusters and 200+ cloud projects across GCP, Azure, AWS, and on-premises RKE2 using Terraform & Ansible'
+category: 'Multi-Cloud & IaC'
+order: 6
+featured: false
+role: 'Senior Platform Engineer & Cloud/DevOps Technical Lead'
+environmentScope: '60+ Kubernetes Clusters (GKE, AKS, EKS, RKE2, OpenShift) & 200+ Cloud Projects'
+problemStatement: 'Rapid cloud adoption across business units created snowflake cloud accounts, inconsistent IAM policies, manual Kubernetes cluster builds, and unoptimized infrastructure spend.'
+businessContext: "Enterprise engineering organizations required a repeatable 'Cloud & Cluster Factory' capable of provisioning compliant GCP projects, Azure subscriptions, AWS accounts, and production-ready Kubernetes clusters in hours instead of weeks."
+architectureSummary: 'Engineered modular, reusable Terraform Infrastructure as Code libraries and idempotent Ansible playbooks to automate multi-cloud landing zones (GCP, Azure, AWS), managed Kubernetes fleets (GKE, AKS, EKS), and bare-metal HA RKE2/kubeadm clusters governed centrally through Rancher and GitOps.'
+mermaidDiagram: |
+  flowchart LR
+    subgraph IaC["Declarative Infrastructure Factory"]
+      TF["Modular Terraform Registry\n(VPC + IAM + Landing Zones)"]
+      Ans["Ansible Automation Roles\n(OS Hardening + RKE2 / Kubeadm)"]
+    end
+    subgraph Fleet["Multi-Cloud & Hybrid Fleet (60+ Clusters / 200+ Projects)"]
+      GCP["Google Cloud (200+ Projects)\nGKE & Anthos Clusters"]
+      Azure["Microsoft Azure\nAKS & Hub-Spoke Landing Zones"]
+      AWS["Amazon Web Services\nEKS & Multi-AZ VPCs"]
+      OnPrem["On-Prem Bare-Metal / VMware\nRKE2 HA & Kubeadm + HAProxy/Keepalived"]
+    end
+    subgraph Mgmt["Central Fleet Governance"]
+      Rancher["SUSE Rancher + Fleet\n(Multi-Cluster RBAC & Lifecycle)"]
+    end
+    TF --> GCP & Azure & AWS
+    Ans --> OnPrem
+    GCP & Azure & AWS & OnPrem --> Rancher
+topologyNodes:
+  - stage: '01 // Cloud Factory'
+    component: 'Reusable Terraform Modules'
+    detail: 'Versioned Terraform modules provisioning 200+ GCP projects, Azure subscriptions, VPCs, and IAM guardrails.'
+  - stage: '02 // Bare-Metal HA'
+    component: 'Ansible + HAProxy/Keepalived'
+    detail: 'Zero-touch Ansible playbooks bootstrapping 3-master stacked etcd HA clusters and RKE2 nodes with VRRP VIPs.'
+  - stage: '03 // Fleet Control'
+    component: 'Rancher + Anthos + Fleet'
+    detail: "Centralized multi-cluster authentication, Let's Encrypt TLS automation, and GitOps policy synchronization."
+  - stage: '04 // FinOps & Scale'
+    component: 'Autoscaling & Rightsizing'
+    detail: 'Continuous resource optimization, node auto-provisioning, and automated non-prod scheduling.'
+keyDecisions:
+  - decision: 'Design composable Terraform modules with strict input validation and remote state locking'
+    rationale: 'Allowed application and platform squads to provision new GCP projects, GKE clusters, or Azure resources using standardized 20-line module invocations that enforce naming, tagging, and network security automatically.'
+    tradeoff: 'Requires strict semantic versioning and CI module testing before releasing breaking provider upgrades.'
+  - decision: 'Standardize bare-metal and VM cluster bootstrapping on Ansible + RKE2 / kubeadm with HAProxy & Keepalived'
+    rationale: 'Provides cloud-like high availability on-premises by pairing Keepalived VRRP floating virtual IPs with HAProxy L4 API server load balancing.'
+    tradeoff: 'Requires careful sysctl, kernel module, and etcd disk latency validation on bare-metal hosts.'
+securityConsiderations:
+  - 'CIS-hardened RKE2 and Linux OS baselines applied automatically via Ansible roles.'
+  - 'Least-privilege cloud IAM roles, Workload Identity bindings, and private cluster API endpoints across GCP, Azure, and AWS.'
+reliabilityConsiderations:
+  - 'Eliminated single points of failure on bare-metal clusters using dual HAProxy + Keepalived load balancers fronting 3 stacked etcd control plane nodes.'
+  - 'Centralized multi-cluster visibility and lifecycle management across 60+ clusters.'
+outcomes:
+  - metric: '60+ Clusters'
+    description: 'Provisioned and supported 60+ production and non-production Kubernetes clusters across hybrid and multi-cloud environments.'
+  - metric: '200+ Projects'
+    description: 'Standardized cloud foundation and project/subscription provisioning across 200+ GCP and multi-cloud environments.'
+  - metric: 'Minutes vs. Days'
+    description: 'Reduced HA Kubernetes and RKE2 cluster bootstrap time from days of manual setup to minutes via Ansible and Terraform.'
+technologies:
+  - 'Terraform'
+  - 'Ansible'
+  - 'Google Cloud (GCP & GKE)'
+  - 'Microsoft Azure (AKS)'
+  - 'AWS (EKS)'
+  - 'Rancher & RKE2'
+  - 'HAProxy & Keepalived'
+  - 'Cluster API & Anthos'
+githubUrl: 'https://github.com/mkbntech/rke2-ha-setup-ansible'
+relatedVideoUrl: 'https://www.youtube.com/watch?v=zvY70Rw4f3U'
+relatedVideoTitle: 'RKE2 High-Availability Cluster Installation With Ansible'
+relatedBlogSlug: 'rke2-ha-ansible'
+---
+
+## Engineering Challenge
+
+Operating at enterprise scale—supporting **60+ Kubernetes clusters** and **200+ cloud projects** across GCP, Azure, AWS, and on-premises data centers—makes manual console provisioning impossible. Any inconsistency in network CIDR allocation, IAM bindings, container runtime configuration, or load balancer timeouts quickly compounds into production outages.
+
+## Solution Architecture
+
+### 1. Multi-Cloud Terraform Landing Zones
+
+We built a versioned library of reusable **Terraform modules** covering:
+
+- **Cloud Foundations**: Automated GCP Project Factory, Azure Landing Zones, hub-and-spoke VPCs, Cloud NAT, and least-privilege IAM bindings.
+- **Managed Kubernetes**: Standardized GKE, AKS, and EKS cluster modules pre-wired with Workload Identity, private nodes, autoscaling node pools, and Prometheus telemetry.
+
+### 2. Automated Bare-Metal HA Kubernetes & RKE2 (`rke2-ha-setup-ansible` & `kubernetes-ha-setup`)
+
+For on-premises environments, we engineered zero-touch **Ansible playbooks** paired with **HAProxy + Keepalived**:
+
+- **Layer-4 VIP Failover**: Two load-balancer nodes run Keepalived VRRP to maintain a floating Virtual IP (VIP) and HAProxy to distribute traffic across three control-plane nodes on port `6443`.
+- **Idempotent Ansible Roles**: Automate swap disablement, kernel modules (`overlay`, `br_netfilter`), containerd/RKE2 server initialization, Calico/Canal CNI rollout, and worker registration.

@@ -1,0 +1,56 @@
+---
+title: 'Deploy Self-Hosted Enterprise GitLab on Ubuntu with Ansible'
+description: 'Automate the deployment, TLS configuration, and day-2 tuning of a self-hosted GitLab instance on Ubuntu servers using idempotent Ansible playbooks.'
+publishedAt: '2025-11-12'
+updatedAt: '2026-02-15'
+category: 'GitOps & CI/CD'
+tags: ['gitlab', 'ci', 'ansible', 'devops', 'automation']
+readingTime: '6 min read'
+featured: false
+canonicalUrl: 'https://www.mkbntech.com/posts/gitlab/'
+youtubeVideoId: 'enLAdNyo4kA'
+githubRepoUrl: 'https://github.com/mkbntech/self-hosted-gitlab-instance'
+---
+
+## Self-Hosted GitLab for Enterprise Source Control & CI/CD
+
+Many enterprise platform teams require an on-premises, air-gapped or VPC-isolated **GitLab** instance to host sensitive infrastructure repositories, Terraform modules, and GitOps manifests. Using **Ansible**, we automate the complete installation and reconfiguration of GitLab Omnibus on Ubuntu.
+
+## Automated Workflow
+
+### 1. Prerequisite Packages & Repository Setup
+
+```yaml
+- name: Install GitLab system dependencies
+  ansible.builtin.apt:
+    name:
+      - curl
+      - openssh-server
+      - ca-certificates
+      - tzdata
+      - perl
+    state: present
+    update_cache: true
+
+- name: Add Official GitLab Package Repository
+  ansible.builtin.shell: |
+    curl -sS https://packages.gitlab.com/install/repositories/gitlab/gitlab-ce/script.deb.sh | bash
+  args:
+    creates: /etc/apt/sources.list.d/gitlab_gitlab-ce.list
+```
+
+### 2. Declarative `gitlab.rb` Configuration & Reconfigure
+
+```yaml
+- name: Install GitLab CE with External URL
+  ansible.builtin.apt:
+    name: gitlab-ce
+    state: present
+  environment:
+    EXTERNAL_URL: 'https://gitlab.mkbn.local'
+
+- name: Reconfigure GitLab Omnibus Services
+  ansible.builtin.command: gitlab-ctl reconfigure
+```
+
+After the playbook finishes, retrieve the initial root password from `/etc/gitlab/initial_root_password`, rotate credentials into HashiCorp Vault, and register Kubernetes-backed GitLab Runners.

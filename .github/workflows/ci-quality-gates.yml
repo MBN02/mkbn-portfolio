@@ -1,0 +1,61 @@
+name: CI Quality Gates & Security Checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  quality-and-test:
+    name: Lint, Typecheck, Unit Test, Build & E2E Accessibility
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Dependency Security Audit
+        run: npm audit --omit=dev --audit-level=critical || true
+
+      - name: Code Formatting Check (Prettier)
+        run: npm run format:check
+
+      - name: Static Analysis (ESLint)
+        run: npm run lint
+
+      - name: Strict TypeScript & Astro Diagnostics
+        run: npm run check
+
+      - name: Unit & Zod Schema Tests (Vitest)
+        run: npm run test:unit
+
+      - name: Production Build (Astro Static Output)
+        run: npm run build
+
+      - name: Install Playwright Chromium Browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Playwright E2E, Visual & WCAG Accessibility Suite
+        run: npm run test:e2e
+
+      - name: Upload Playwright Verification Screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-screenshots-and-reports
+          path: test-results/
+          retention-days: 14

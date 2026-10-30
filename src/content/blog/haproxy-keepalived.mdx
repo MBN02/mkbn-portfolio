@@ -1,0 +1,65 @@
+---
+title: 'How to Setup High-Availability Load Balancing with HAProxy & Keepalived'
+description: 'Configure redundant Active/Passive HAProxy load balancers with Keepalived VRRP floating Virtual IPs (VIP) on Ubuntu 24.04 to eliminate single points of failure.'
+publishedAt: '2025-11-03'
+category: 'Storage & Networking'
+tags: ['haproxy', 'keepalived', 'loadbalancer', 'networking', 'high-availability']
+readingTime: '6 min read'
+featured: false
+canonicalUrl: 'https://www.mkbntech.com/posts/haproxy-keepalived/'
+youtubeVideoId: 'Lbu8aQt-2VU'
+githubRepoUrl: 'https://github.com/mkbntech/kubernetes-ha-setup'
+---
+
+## Eliminating Single Points of Failure for Kubernetes API Servers
+
+A multi-master Kubernetes control plane is only as resilient as the load balancer sitting in front of port `6443`. By combining **Keepalived** (using the VRRP protocol to manage a floating Virtual IP) with **HAProxy** (performing Layer-4 TCP health checks across control-plane nodes), we achieve sub-second automatic failover.
+
+## Configuration Breakdown
+
+### 1. Keepalived Health Check & VRRP Configuration (`/etc/keepalived/keepalived.conf`)
+
+```ini
+vrrp_script check_apiserver {
+  script "/etc/keepalived/check_apiserver.sh"
+  interval 3
+  weight -2
+  fall 10
+  rise 2
+}
+
+vrrp_instance VI_1 {
+  state MASTER
+  interface eth0
+  virtual_router_id 51
+  priority 101
+  authentication {
+    auth_type PASS
+    auth_pass K8sHaVipPass
+  }
+  virtual_ipaddress {
+    192.168.10.100/24
+  }
+  track_script {
+    check_apiserver
+  }
+}
+```
+
+### 2. HAProxy Layer-4 Control Plane Frontend (`/etc/haproxy/haproxy.cfg`)
+
+```ini
+frontend kubernetes-frontend
+  bind *:6443
+  mode tcp
+  option tcplog
+  default_backend kubernetes-backend
+
+backend kubernetes-backend
+  mode tcp
+  option tcp-check
+  balance roundrobin
+  server k8s-master-01 192.168.10.11:6443 check fall 3 rise 2
+  server k8s-master-02 192.168.10.12:6443 check fall 3 rise 2
+  server k8s-master-03 192.168.10.13:6443 check fall 3 rise 2
+```

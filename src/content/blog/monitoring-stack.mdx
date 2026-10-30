@@ -1,0 +1,62 @@
+---
+title: 'Kubernetes Monitoring with Prometheus, Grafana, and Loki'
+description: 'Deploy a production observability stack on Kubernetes combining kube-prometheus-stack metrics, Alertmanager routing, and Grafana Loki centralized logging.'
+publishedAt: '2025-11-28'
+category: 'Observability'
+tags: ['monitoring', 'observability', 'prometheus', 'grafana', 'loki', 'kubernetes']
+readingTime: '8 min read'
+featured: true
+canonicalUrl: 'https://www.mkbntech.com/posts/monitoring-stack/'
+youtubeVideoId: 'r_w-pNueZuI'
+githubRepoUrl: 'https://github.com/mkbntech/monitoring-stack-kuberntes'
+architectureDiagram: |
+  flowchart LR
+    Pods["Kubernetes Pods & Nodes\n(cAdvisor + Node Exporter)"] --> Prom["Prometheus Server\n(Time-Series Metrics)"]
+    Pods --> Promtail["Promtail DaemonSet\n(Pod Log Tailer)"]
+    Promtail --> Loki["Grafana Loki\n(Label-Indexed Logs)"]
+    Prom --> Alert["Alertmanager\n(SLO Notification Routing)"]
+    Prom & Loki --> Grafana["Grafana Unified UI\n(Metrics + Logs Correlation)"]
+---
+
+## Unified Observability on Kubernetes
+
+Operating Kubernetes in production without unified metrics and logs leaves SRE teams blind during latency spikes and node saturation events. By pairing **kube-prometheus-stack** with **Grafana Loki**, both metrics and container logs share the exact same Kubernetes metadata labels (`namespace`, `pod`, `container`, `app`).
+
+## Deploying the Stack via Helm
+
+### 1. Add Prometheus Community and Grafana Helm Repositories
+
+```bash
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo add grafana https://grafana.github.io/helm-charts
+helm repo update
+
+kubectl create namespace monitoring
+```
+
+### 2. Install `kube-prometheus-stack`
+
+```bash
+helm upgrade --install monitoring prometheus-community/kube-prometheus-stack \
+  --namespace monitoring \
+  --set prometheus.prometheusSpec.retention=15d \
+  --set grafana.adminPassword="StrongPlatformAdminPassword"
+```
+
+### 3. Install Grafana Loki and Promtail
+
+```bash
+helm upgrade --install loki grafana/loki-stack \
+  --namespace monitoring \
+  --set promtail.enabled=true \
+  --set loki.persistence.enabled=true \
+  --set loki.persistence.size=20Gi
+```
+
+## Connecting Loki in Grafana & Querying with LogQL
+
+Add `http://loki.monitoring.svc.cluster.local:3100` as a Loki Data Source in Grafana and execute targeted **LogQL** queries to isolate errors across namespaces:
+
+```logql
+{namespace="production", app="payment-service"} |= "error" != "healthcheck"
+```

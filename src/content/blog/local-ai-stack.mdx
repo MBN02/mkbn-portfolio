@@ -1,0 +1,71 @@
+---
+title: 'Local AI Stack: Ollama + NVIDIA GPU Operator + Open WebUI on Kubernetes'
+description: 'Build a self-hosted, GPU-accelerated AI platform on Kubernetes using MicroK8s, the NVIDIA GPU Operator, Ollama, and Open WebUI.'
+publishedAt: '2025-11-19'
+category: 'Platform Engineering'
+tags: ['AI', 'kubernetes', 'ollama', 'nvidia', 'platform-engineering']
+readingTime: '7 min read'
+featured: false
+canonicalUrl: 'https://www.mkbntech.com/posts/local-ai-stack/'
+youtubeVideoId: 'a-EqyRsnJSc'
+githubRepoUrl: 'https://github.com/mkbntech/local-ai-stack'
+architectureDiagram: |
+  flowchart LR
+    GPU["NVIDIA Physical GPU\n(Host Workstation / Server)"] --> Operator["NVIDIA GPU Operator\n(Container Toolkit + Device Plugin)"]
+    Operator --> Ollama["Ollama Stateful Pod\n(nvidia.com/gpu: 1)"]
+    Ollama <--> WebUI["Open WebUI Service\n(Internal Developer & SRE Chat)"]
+---
+
+## Self-Hosted AI Infrastructure on Kubernetes
+
+Running Large Language Models on your own Kubernetes infrastructure gives engineering teams full data sovereignty and predictable hardware costs. Using **MicroK8s**, the **NVIDIA GPU Operator**, **Ollama**, and **Open WebUI**, we can transform any NVIDIA GPU server into a multi-model Kubernetes inference platform.
+
+## Implementation Guide
+
+### 1. Enable NVIDIA GPU Support on Kubernetes
+
+```bash
+# Enable DNS, hostpath storage, and NVIDIA GPU Operator addon
+sudo microk8s enable dns hostpath-storage
+sudo microk8s enable gpu
+
+# Verify GPU allocatable capacity on the Kubernetes node
+kubectl describe node | grep -A 5 "Capacity:"
+```
+
+### 2. Deploy Ollama and Open WebUI with GPU Passthrough
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ollama
+  namespace: ai-stack
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ollama
+  template:
+    metadata:
+      labels:
+        app: ollama
+    spec:
+      containers:
+        - name: ollama
+          image: ollama/ollama:latest
+          ports:
+            - containerPort: 11434
+          resources:
+            limits:
+              nvidia.com/gpu: 1
+          volumeMounts:
+            - name: ollama-models
+              mountPath: /root/.ollama
+      volumes:
+        - name: ollama-models
+          persistentVolumeClaim:
+            claimName: ollama-models-pvc
+```
+
+Once running, deploy **Open WebUI** pointed at `http://ollama.ai-stack.svc.cluster.local:11434` to provide a responsive browser interface and local OpenAI-compatible API endpoint for internal tooling.

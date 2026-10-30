@@ -1,0 +1,58 @@
+---
+title: "Let's Build a High-Availability Kubernetes Cluster on Bare-Metal Servers"
+description: 'Complete step-by-step guide to bootstrapping a 3-master stacked etcd High-Availability Kubernetes cluster on Ubuntu 24.04 bare-metal servers with containerd and Calico.'
+publishedAt: '2025-11-03'
+category: 'Kubernetes'
+tags: ['kubernetes', 'baremetal', 'high-availability', 'kubeadm', 'etcd']
+readingTime: '10 min read'
+featured: true
+canonicalUrl: 'https://www.mkbntech.com/posts/k8s-kubeadm-ha-cluster/'
+youtubeVideoId: 'Lbu8aQt-2VU'
+githubRepoUrl: 'https://github.com/mkbntech/kubernetes-ha-setup'
+architectureDiagram: |
+  flowchart LR
+    Clients["kubectl / Worker Kubelets"] --> VIP["Floating VIP (192.168.10.100:6443)\nLB1 (Active) + LB2 (Backup)"]
+    VIP --> M1["Master 01\n(API + Stacked etcd)"]
+    VIP --> M2["Master 02\n(API + Stacked etcd)"]
+    VIP --> M3["Master 03\n(API + Stacked etcd)"]
+    M1 <-->|"etcd Raft Quorum"| M2 & M3
+---
+
+## Architecture Overview
+
+To run production workloads on bare-metal Ubuntu 24.04 servers without a cloud provider's managed control plane, we design a **7-node High-Availability topology**:
+
+- **2x Load Balancer Nodes**: Running HAProxy + Keepalived serving the floating Virtual IP (`192.168.10.100:6443`).
+- **3x Control Plane Nodes**: Running `kube-apiserver`, `kube-controller-manager`, `kube-scheduler`, and a stacked **etcd Raft quorum**.
+- **2+ Worker Nodes**: Running `containerd`, `kubelet`, and Calico CNI for application workloads.
+
+## Bootstrapping the Stacked HA Control Plane
+
+### 1. Initialize the First Control Plane Node (`master-01`)
+
+```bash
+sudo kubeadm init \
+  --control-plane-endpoint "192.168.10.100:6443" \
+  --upload-certs \
+  --pod-network-cidr=192.168.0.0/16
+```
+
+### 2. Join Additional Control Plane Nodes (`master-02` & `master-03`)
+
+Using the `--control-plane` and `--certificate-key` flags printed by `kubeadm init`, join the second and third control plane nodes to establish a 3-member etcd quorum:
+
+```bash
+sudo kubeadm join 192.168.10.100:6443 \
+  --token <token> \
+  --discovery-token-ca-cert-hash sha256:<hash> \
+  --control-plane \
+  --certificate-key <certificate-key>
+```
+
+### 3. Deploy Calico CNI & Verify etcd Health
+
+```bash
+kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.28.0/manifests/calico.yaml
+kubectl get nodes -o wide
+kubectl -n kube-system get pods -l component=etcd
+```

@@ -1,0 +1,98 @@
+---
+title: 'Unified Cloud-Native Observability & High-Availability Distributed Storage'
+subtitle: 'Full-stack Prometheus, Grafana, Alertmanager, and Loki telemetry paired with self-healing Ceph & Longhorn storage for 99.9% SLA workloads'
+category: 'Observability & Storage'
+order: 7
+featured: false
+role: 'Senior Site Reliability & Platform Engineer'
+environmentScope: '24/7 Production SaaS & Enterprise Kubernetes Platforms (99.9% SLA)'
+problemStatement: 'Stateful applications and high-throughput microservices suffered from fragmented log/metric visibility during incidents and lacked resilient, cloud-native persistent block/object storage on bare-metal and hybrid Kubernetes clusters.'
+businessContext: 'Sustaining a 99.9% production SLA for 24/7 platforms required correlating metrics, logs, and alerts in a single pane of glass while ensuring stateful workloads (databases, queues, registries) survived node and disk failures without data loss.'
+architectureSummary: 'Designed and operated a unified observability stack using Prometheus, Alertmanager, Grafana, and Loki alongside self-healing distributed storage platforms powered by external Ceph clusters (provisioned via Ansible) and SUSE Longhorn cloud-native block storage.'
+mermaidDiagram: |
+  flowchart LR
+    subgraph Workloads["Stateful & Microservice Workloads (99.9% SLA)"]
+      Apps["Microservices & APIs\n(70% Microservices / 30% Monoliths)"]
+      Data["Stateful Data Layer\n(MySQL, Kafka, Cassandra, Harbor)"]
+    end
+    subgraph Storage["Self-Healing Distributed Storage"]
+      Longhorn["SUSE Longhorn CSI\n(3x Replicated Block Volumes)"]
+      Ceph["External Ceph Cluster\n(RBD Block + CephFS + RGW Object)"]
+    end
+    subgraph Obs["Unified Observability Stack"]
+      Prom["Prometheus + Alertmanager\n(Golden Signals & SLO Burn Alerts)"]
+      Loki["Grafana Loki + Promtail\n(Centralized Pod & Node Logs)"]
+      Graf["Grafana Dashboards\n(Metric-to-Log Correlation)"]
+    end
+    Data --> Longhorn & Ceph
+    Apps & Data --> Prom & Loki
+    Storage --> Prom
+    Prom & Loki --> Graf
+topologyNodes:
+  - stage: '01 // Metrics & SLOs'
+    component: 'Prometheus + Alertmanager'
+    detail: 'ServiceMonitors, node-exporter, kube-state-metrics, and PromQL recording rules driving actionable SLO alerts.'
+  - stage: '02 // Log Aggregation'
+    component: 'Grafana Loki + Promtail'
+    detail: 'Label-indexed centralized log ingestion across all namespaces without full-text Elasticsearch overhead.'
+  - stage: '03 // Block Storage'
+    component: 'SUSE Longhorn CSI'
+    detail: 'Cloud-native distributed block storage with synchronous multi-node volume replicas and S3 backup targets.'
+  - stage: '04 // Enterprise Storage'
+    component: 'Ceph Cluster (Ansible)'
+    detail: 'Self-healing distributed RBD block, CephFS shared file, and RGW object storage for Kubernetes and VMs.'
+keyDecisions:
+  - decision: 'Adopt Grafana Loki paired with Prometheus instead of heavy ELK stacks for Kubernetes log aggregation'
+    rationale: 'Loki indexes only Kubernetes metadata labels (namespace, pod, container, app) matching Prometheus labels, enabling instant metric-to-log drilldowns at a fraction of the RAM and storage cost.'
+    tradeoff: 'Ad-hoc regex queries over massive unindexed log ranges require LogQL filter optimization.'
+  - decision: 'Combine Longhorn for lightweight in-cluster block storage and External Ceph for high-capacity multi-cluster storage'
+    rationale: 'Longhorn provides turn-key Kubernetes-native block replication for standalone clusters, while Ansible-managed external Ceph scales to petabyte RBD/CephFS/S3 workloads shared across multiple clusters.'
+    tradeoff: 'External Ceph requires dedicated storage network bandwidth (10GbE+) and OSD disk layout planning.'
+securityConsiderations:
+  - 'Ceph Cephx authentication and isolated storage network VLANs for OSD replication traffic.'
+  - 'RBAC-restricted Grafana data sources and encrypted persistent volume classes.'
+reliabilityConsiderations:
+  - '3x synchronous replica factor across failure domains in both Longhorn and Ceph OSD pools eliminates single-node disk failure impact.'
+  - 'Proactive disk saturation, inode exhaustion, and etcd fsync latency alerts routed through Alertmanager.'
+outcomes:
+  - metric: '99.9% SLA'
+    description: 'Sustained 24/7 high availability across hybrid microservices and stateful data infrastructure.'
+  - metric: 'Single Pane'
+    description: 'Unified metrics, logs, and storage telemetry in Grafana to slash incident Mean Time to Resolution (MTTR).'
+  - metric: 'Self-Healing'
+    description: 'Automated storage replica rebuilds and failover using Ceph and Longhorn distributed storage engines.'
+technologies:
+  - 'Prometheus'
+  - 'Grafana'
+  - 'Loki'
+  - 'Alertmanager'
+  - 'Ceph Distributed Storage'
+  - 'SUSE Longhorn'
+  - 'Ansible'
+  - 'Apache Kafka & Cassandra'
+githubUrl: 'https://github.com/mkbntech/monitoring-stack-kuberntes'
+relatedVideoUrl: 'https://www.youtube.com/watch?v=r_w-pNueZuI'
+relatedVideoTitle: 'Kubernetes Monitoring Stack: Prometheus, Grafana, and Loki'
+relatedBlogSlug: 'monitoring-stack'
+---
+
+## Engineering Challenge
+
+Running stateful workloads and high-traffic SaaS microservices on Kubernetes introduces two recurring failure modes:
+
+1. **Observability Silos**: Metrics live in one tool while container logs require SSHing or running `kubectl logs` across dozens of pods during an outage.
+2. **Stateful Persistence on Bare-Metal/Hybrid Nodes**: Local hostPath volumes tie pods to a single node, causing immediate downtime if a worker host fails.
+
+## Solution Architecture
+
+### 1. Metric-to-Log Correlation with Prometheus, Grafana & Loki (`monitoring-stack-kuberntes`)
+
+We deployed the unified **kube-prometheus-stack** alongside **Grafana Loki**:
+
+- **Metrics**: Prometheus scrapes `kube-state-metrics`, `node-exporter`, cAdvisor, CNI, and storage CSI metrics.
+- **Logs**: Promtail DaemonSets tail `/var/log/pods/*`, attaching identical Kubernetes labels (`namespace`, `pod`, `app`) so engineers can pivot from a Prometheus latency spike directly to the exact pod log lines in Grafana.
+
+### 2. Resilient Distributed Storage with Ceph & Longhorn
+
+- **External Ceph via Ansible (`ceph-ansible`)**: Automated deployment of Ceph Monitor (`mon`), Manager (`mgr`), and Object Storage Daemon (`osd`) nodes providing self-healing RBD block volumes and CephFS shared file systems.
+- **Longhorn Cloud-Native Storage (`longhorn`)**: Deployed via Helm with 3x synchronous volume replication across worker nodes and automated snapshot backups.

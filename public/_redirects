@@ -1,0 +1,5 @@
+# Convenience redirects from legacy blog paths to /blog/*
+/posts/:slug /blog/:slug 301
+/posts/:slug/ /blog/:slug 301
+/cv /resume 301
+/youtube /videos 301

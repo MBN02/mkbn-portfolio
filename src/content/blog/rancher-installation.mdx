@@ -1,0 +1,48 @@
+---
+title: "Install Rancher with Let's Encrypt on Kubernetes"
+description: "Deploy SUSE Rancher on a Kubernetes cluster with NGINX Ingress Controller, cert-manager, and automated Let's Encrypt TLS certificate management."
+publishedAt: '2025-11-08'
+category: 'Kubernetes'
+tags: ['rancher', 'kubernetes', 'letsencrypt', 'cert-manager', 'multi-cluster']
+readingTime: '6 min read'
+featured: false
+canonicalUrl: 'https://www.mkbntech.com/posts/rancher-installation/'
+youtubeVideoId: 'OGaLWmiTfuc'
+---
+
+## Centralized Multi-Cluster Kubernetes Management
+
+**SUSE Rancher** provides a unified control plane for importing, provisioning, and governing multi-cluster Kubernetes fleets across cloud and on-premises environments.
+
+## Step-by-Step Deployment
+
+### 1. Install `cert-manager` for Automated TLS
+
+```bash
+helm repo add jetstack https://charts.jetstack.io
+helm repo update
+
+helm install cert-manager jetstack/cert-manager \
+  --namespace cert-manager \
+  --create-namespace \
+  --set crds.enabled=true
+```
+
+### 2. Install Rancher with Let's Encrypt Ingress TLS
+
+```bash
+helm repo add rancher-latest https://releases.rancher.com/server-charts/latest
+helm repo update
+
+kubectl create namespace cattle-system
+
+helm install rancher rancher-latest/rancher \
+  --namespace cattle-system \
+  --set hostname=rancher.mkbn.in \
+  --set bootstrapPassword=admin \
+  --set ingress.tls.source=letsEncrypt \
+  --set letsEncrypt.email=admin@mkbn.in \
+  --set letsEncrypt.ingress.class=nginx
+```
+
+Monitor the rollout using `kubectl -n cattle-system rollout status deploy/rancher` until all replicas are healthy and the Let's Encrypt `Certificate` resource reaches `Ready=True`.

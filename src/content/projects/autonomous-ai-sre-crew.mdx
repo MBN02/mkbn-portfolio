@@ -1,0 +1,97 @@
+---
+title: 'Autonomous AI SRE Crew for Self-Healing Kubernetes Operations'
+subtitle: 'In-cluster multi-agent AI SRE system built with Python, CrewAI, local GPU-accelerated Ollama LLMs, K8sGPT, and kubectl-ai'
+category: 'Autonomous AI SRE'
+order: 5
+featured: true
+role: 'Creator & Principal AI/Platform Architect'
+environmentScope: 'Kubernetes / MicroK8s + NVIDIA GPU Operator + Local Ollama LLM Inference'
+problemStatement: 'On-call SRE teams spend excessive hours triaging repetitive Level-1 Kubernetes incidents—such as CrashLoopBackOff pods, OOMKills, image pull errors, and broken Service selectors—while commercial cloud AI tools raise data-privacy concerns for cluster logs.'
+businessContext: 'We needed a privacy-preserving, 100% self-hosted AI SRE capability running directly inside the Kubernetes cluster that continuously monitors Golden Signals, inspects pod logs and events, determines root causes, and executes guarded remediation actions.'
+architectureSummary: 'Engineered an in-cluster Autonomous AI SRE Crew using Python and CrewAI orchestrated over a local GPU-accelerated Ollama LLM stack (MicroK8s + NVIDIA GPU Operator), complemented by the K8sGPT Operator and kubectl-ai for continuous cluster diagnostics and self-healing operations.'
+mermaidDiagram: |
+  flowchart LR
+    subgraph Cluster["Kubernetes / OpenShift Cluster"]
+      Prom["Prometheus & K8s Events\n(Golden Signals & Pod Failures)"]
+      subgraph AICrew["Autonomous AI SRE Crew (CrewAI Pod)"]
+        Monitor["Telemetry Watcher Agent"]
+        Diag["Log & Event Forensics Agent\n(K8sGPT / kubectl-ai)"]
+        Remed["Guarded Remediation Agent\n(Scoped RBAC ServiceAccount)"]
+      end
+      Ollama["Local Ollama LLM Server\n(NVIDIA GPU Operator)"]
+      Workload["Target Application Pods\n(Rollout Restart / Scale / Alert)"]
+    end
+    Prom --> Monitor
+    Monitor --> Diag
+    Diag <-->|"Private In-Cluster Inference"| Ollama
+    Diag --> Remed
+    Remed -->|"Guarded K8s API Action"| Workload
+topologyNodes:
+  - stage: '01 // Signal Detection'
+    component: 'Golden Signal Watcher'
+    detail: 'Monitors Kubernetes Warning events, Prometheus alerts, OOMKills (Exit 137), and CrashLoopBackOff transitions.'
+  - stage: '02 // Private Inference'
+    component: 'Local Ollama + NVIDIA GPU'
+    detail: '100% air-gapped LLM inference running inside Kubernetes via NVIDIA GPU Operator and Open WebUI.'
+  - stage: '03 // Root Cause Analysis'
+    component: 'CrewAI + K8sGPT Forensics'
+    detail: 'Correlates pod logs, `kubectl describe` events, and manifest specs to isolate configuration vs. transient failures.'
+  - stage: '04 // Guarded Action'
+    component: 'Scoped Remediation Agent'
+    detail: 'Executes safe, RBAC-bounded actions (pod restart, rollout undo, or structured Slack/PagerDuty escalation).'
+keyDecisions:
+  - decision: 'Run LLM inference locally inside the cluster with Ollama and NVIDIA GPU Operator rather than external SaaS APIs'
+    rationale: 'Production pod logs and Kubernetes events frequently contain sensitive internal topology, IP addresses, or stack traces that must never leave the enterprise perimeter.'
+    tradeoff: 'Requires GPU-enabled worker nodes (or Apple Silicon/dedicated inference hosts) and model quantization tuning.'
+  - decision: 'Use a specialized multi-agent CrewAI architecture with strict Kubernetes RBAC boundaries'
+    rationale: 'Separating the Watcher, Forensics Diagnostician, and Remediation Executor agents prevents hallucinated destructive commands; the Remediation Agent can only invoke pre-approved Kubernetes API verbs.'
+    tradeoff: 'Slightly higher token orchestration overhead per incident in exchange for deterministic safety.'
+securityConsiderations:
+  - 'Zero external API egress: all telemetry, logs, and prompts remain inside the cluster network boundary.'
+  - 'Dedicated Kubernetes ServiceAccount for the SRE Crew with strictly scoped RoleBindings (no cluster-admin or namespace deletion privileges).'
+  - 'Human-in-the-loop escalation path for structural manifest bugs that cannot be resolved via safe rollout restarts.'
+reliabilityConsiderations:
+  - 'Integrated K8sGPT Operator continuous scanning metrics into Prometheus and Grafana dashboards.'
+  - 'Idempotent remediation cooldown timers prevent infinite restart loops on persistently broken application builds.'
+outcomes:
+  - metric: '24/7 L1 Triage'
+    description: 'Autonomous in-cluster investigation of pod crashes, OOMKills, and misconfigurations within seconds of detection.'
+  - metric: '100% Private'
+    description: 'Zero cluster logs or telemetry sent to third-party cloud LLM providers via local Ollama GPU inference.'
+  - metric: 'Open Source'
+    description: 'Published complete reference architectures and repos for CrewAI SRE, K8sGPT Operator, local AI stack, and kubectl-ai.'
+technologies:
+  - 'Python'
+  - 'CrewAI'
+  - 'Ollama (Local LLMs)'
+  - 'NVIDIA GPU Operator'
+  - 'K8sGPT Operator'
+  - 'kubectl-ai'
+  - 'Kubernetes API'
+  - 'Prometheus'
+  - 'Open WebUI'
+githubUrl: 'https://github.com/mkbntech/autonomous-ai-sre-crew'
+relatedVideoUrl: 'https://www.youtube.com/watch?v=-UUKeyI57nw'
+relatedVideoTitle: 'AI-Powered Kubernetes Troubleshooting with K8sGPT'
+relatedBlogSlug: 'k8sgpt'
+---
+
+## Engineering Challenge
+
+Kubernetes clusters generate thousands of events, container logs, and metric time-series every minute. When a microservice enters `CrashLoopBackOff` or suffers an `OOMKilled` termination at 3:00 AM, on-call engineers must manually run `kubectl get events`, `kubectl logs --previous`, and inspect resource limits before deciding whether to restart the workload or escalate to the application squad.
+
+## Solution Architecture
+
+We built a complete **Local AI-Driven SRE Stack** spanning three open-source repositories (`autonomous-ai-sre-crew`, `local-ai-stack`, and `k8sgpt-cli-operator-setup`):
+
+### 1. GPU-Accelerated Local LLM Infrastructure (`local-ai-stack`)
+
+Using **MicroK8s / Kubernetes**, the **NVIDIA GPU Operator**, and **Ollama**, we provisioned an in-cluster inference service capable of running models like `llama3` and `qwen2.5-coder` locally with zero external network dependencies.
+
+### 2. Multi-Agent SRE Crew (`autonomous-ai-sre-crew`)
+
+Deployed as a Kubernetes `Deployment` bound to a least-privilege `ServiceAccount`, the Python **CrewAI** system coordinates specialized agents:
+
+- **Telemetry & Event Watcher**: Detects failing pods and anomalous Golden Signals.
+- **Forensic Diagnostician**: Fetches recent container logs and Kubernetes events, synthesizing a structured Root Cause Analysis (RCA).
+- **Remediation Executor**: If the RCA identifies a transient deadlock or upstream timeout, executes a controlled rolling restart; if it detects a code defect or OOM limit breach, dispatches a rich diagnostic report with the exact YAML fix.

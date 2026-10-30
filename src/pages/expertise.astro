@@ -1,0 +1,30 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import InteractiveSkillMap from '@/components/skills/InteractiveSkillMap';
+import { skillDomains } from '@/data/skills';
+---
+
+<BaseLayout
+  title="Engineering Capability Map & Technical Expertise"
+  description="Interactive platform engineering capability map of Mohan Kumar BN — spanning Red Hat OpenShift, Kubernetes, Port IDP, GitOps (Argo CD, Tekton), HashiCorp Vault, Prometheus/Loki, Terraform, and Autonomous AI SRE."
+>
+  <section class="py-14 sm:py-20">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div class="max-w-3xl">
+        <span class="section-badge">EXPERTISE // EVIDENCE-BACKED CAPABILITY MAP</span>
+        <h1 class="mt-4 text-4xl font-extrabold tracking-tight text-slate-50 sm:text-5xl">
+          Interactive Engineering Capability Map
+        </h1>
+        <p class="mt-4 text-base sm:text-lg leading-relaxed text-slate-400">
+          Rather than arbitrary skill percentage bars, every technology below is backed by
+          real-world production architectures, enterprise role context, implementation patterns, and
+          direct links to case studies, GitHub repositories, articles, and video walkthroughs.
+        </p>
+      </div>
+
+      <div class="mt-10">
+        <InteractiveSkillMap client:load domains={skillDomains} />
+      </div>
+    </div>
+  </section>
+</BaseLayout>

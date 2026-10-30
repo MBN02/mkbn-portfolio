@@ -1,0 +1,64 @@
+{
+  "name": "mkbn-portfolio",
+  "type": "module",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Senior Platform Engineer, SRE Lead & CNCF Kubestronaut Portfolio — Mohan Kumar BN (www.mkbn.in)",
+  "scripts": {
+    "dev": "astro dev",
+    "start": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro",
+    "check": "astro check && tsc --noEmit",
+    "lint": "eslint \"src/**/*.{ts,tsx}\"",
+    "format:check": "prettier --check \"src/**/*.{ts,tsx,astro,css,md,mdx}\"",
+    "format": "prettier --write \"src/**/*.{ts,tsx,astro,css,md,mdx}\"",
+    "test:unit": "vitest run",
+    "test:e2e": "playwright test",
+    "sync:youtube": "node scripts/sync-content.mjs",
+    "sync:content": "node scripts/sync-content.mjs"
+  },
+  "dependencies": {
+    "@astrojs/mdx": "^4.2.0",
+    "@astrojs/react": "^4.2.0",
+    "@astrojs/sitemap": "^3.3.0",
+    "@astrojs/tailwind": "^6.0.0",
+    "@tailwindcss/typography": "^0.5.16",
+    "astro": "~5.16.16",
+    "clsx": "^2.1.1",
+    "gsap": "^3.12.7",
+    "lucide-react": "^0.487.0",
+    "motion": "^12.6.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "tailwind-merge": "^3.0.2",
+    "tailwindcss": "^3.4.17",
+    "three": "^0.174.0",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.4",
+    "@axe-core/playwright": "^4.10.1",
+    "@playwright/test": "^1.51.0",
+    "@types/node": "^22.13.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@types/three": "^0.174.0",
+    "@typescript-eslint/eslint-plugin": "^8.26.0",
+    "@typescript-eslint/parser": "^8.26.0",
+    "eslint": "^9.22.0",
+    "prettier": "^3.5.3",
+    "prettier-plugin-astro": "^0.14.1",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.8.2",
+    "vitest": "^4.1.12"
+  },
+  "overrides": {
+    "postcss-selector-parser": "^7.1.7",
+    "sharp": "^0.35.5"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

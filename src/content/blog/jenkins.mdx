@@ -1,0 +1,87 @@
+---
+title: 'Running Cloud-Native Jenkins on Kubernetes'
+description: 'Deploy a resilient Jenkins automation controller on Kubernetes with persistent volume storage, RBAC service accounts, and dynamic ephemeral build agent pods.'
+publishedAt: '2025-12-31'
+category: 'GitOps & CI/CD'
+tags: ['jenkins', 'ci', 'kubernetes', 'cicd', 'devops']
+readingTime: '6 min read'
+featured: false
+canonicalUrl: 'https://www.mkbntech.com/posts/jenkins/'
+youtubeVideoId: 'aKbHG255F88'
+githubRepoUrl: 'https://github.com/mkbntech/simple-python-app'
+---
+
+## Why Run Jenkins on Kubernetes?
+
+Running Jenkins natively on Kubernetes eliminates idle static build VMs. The Jenkins controller runs as a stateful workload backed by a `PersistentVolumeClaim`, while every pipeline execution dynamically provisions ephemeral Kubernetes agent pods that terminate immediately after the build completes.
+
+## Step-by-Step Deployment
+
+### 1. Create Dedicated Namespace, ServiceAccount & RBAC
+
+```yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: devops-tools
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: jenkins-admin
+  namespace: devops-tools
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: jenkins-admin-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+  - kind: ServiceAccount
+    name: jenkins-admin
+    namespace: devops-tools
+```
+
+### 2. Deploy the Jenkins Controller with Persistent Storage
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jenkins
+  namespace: devops-tools
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: jenkins-server
+  template:
+    metadata:
+      labels:
+        app: jenkins-server
+    spec:
+      securityContext:
+        fsGroup: 1000
+        runAsUser: 1000
+      serviceAccountName: jenkins-admin
+      containers:
+        - name: jenkins
+          image: jenkins/jenkins:lts
+          ports:
+            - name: httpport
+              containerPort: 8080
+            - name: jnlpport
+              containerPort: 50000
+          volumeMounts:
+            - name: jenkins-data
+              mountPath: /var/jenkins_home
+      volumes:
+        - name: jenkins-data
+          persistentVolumeClaim:
+            claimName: jenkins-pv-claim
+```
+
+Configure the **Kubernetes plugin** inside Jenkins pointing to `https://kubernetes.default.svc.cluster.local` to spawn dynamic Maven and Python build pods on demand.

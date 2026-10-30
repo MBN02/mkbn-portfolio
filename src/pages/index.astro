@@ -1,0 +1,658 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import PlatformPipelineHero from '@/components/home/PlatformPipelineHero';
+import { profile, socialLinks } from '@/data/profile';
+import { skillDomains } from '@/data/skills';
+import { certifications } from '@/data/certifications';
+import { videos } from '@/data/videos';
+import { getCollection } from 'astro:content';
+
+const allProjects = await getCollection('projects');
+const featuredProjects = allProjects.sort((a, b) => a.data.order - b.data.order).slice(0, 4);
+
+const allPosts = await getCollection('blog');
+const featuredPosts = allPosts
+  .sort((a, b) => new Date(b.data.publishedAt).getTime() - new Date(a.data.publishedAt).getTime())
+  .slice(0, 3);
+
+const featuredVideos = videos.filter((v) => v.format === 'masterclass').slice(0, 3);
+const spotlightCerts = certifications.filter((c) => c.featured).slice(0, 6);
+---
+
+<BaseLayout>
+  <!-- 1. CINEMATIC HERO EXPERIENCE -->
+  <section class="relative overflow-hidden pt-10 pb-20 sm:pt-16 sm:pb-24">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div class="grid grid-cols-1 items-center gap-12 lg:grid-cols-12">
+        <!-- Left Column: Typography, Positioning & CTAs -->
+        <div class="lg:col-span-7">
+          <div
+            class="inline-flex flex-wrap items-center gap-2.5 rounded-full border border-accent-cyan/35 bg-obsidian-800/90 px-4 py-1.5 font-mono text-xs font-medium text-accent-cyan shadow-glow-cyan"
+          >
+            <span class="radar-dot h-2 w-2 rounded-full bg-accent-emerald"></span>
+            <span>CNCF CERTIFIED KUBESTRONAUT · 13+ YEARS EXPERIENCE</span>
+          </div>
+
+          <h1
+            class="mt-6 text-4xl font-extrabold tracking-tight text-slate-50 sm:text-6xl lg:text-[3.65rem] lg:leading-[1.08]"
+          >
+            <span class="block">{profile.headline.line1}</span>
+            <span
+              class="block bg-gradient-to-r from-accent-blue via-accent-cyan to-accent-violet bg-clip-text text-transparent"
+            >
+              {profile.headline.line2}
+            </span>
+            <span class="block">{profile.headline.line3}</span>
+          </h1>
+
+          <p
+            class="mt-5 font-mono text-xs sm:text-sm font-medium tracking-wide text-accent-cyan/95"
+          >
+            {profile.roleTagline}
+          </p>
+
+          <p class="mt-5 max-w-2xl text-base sm:text-lg leading-relaxed text-slate-400">
+            Hi, I’m <strong class="font-semibold text-slate-50">{profile.name}</strong>. I architect
+            and operate enterprise multi-cluster <strong class="text-slate-50"
+              >Red Hat OpenShift</strong
+            > and <strong class="text-slate-50">Kubernetes</strong> platforms, self-service <strong
+              class="text-slate-50">Internal Developer Platforms (Port)</strong
+            >, declarative <strong class="text-slate-50">GitOps</strong> pipelines, and autonomous <strong
+              class="text-slate-50">AI SRE</strong
+            > systems across 60+ clusters and 200+ cloud projects.
+          </p>
+
+          <!-- Primary & Secondary CTAs -->
+          <div class="mt-8 flex flex-wrap items-center gap-4">
+            <a href="/projects" class="btn-primary">
+              <span>Explore My Work</span>
+              <svg
+                class="h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"
+                ></path>
+              </svg>
+            </a>
+            <a href={profile.resumeUrl} download class="btn-secondary">
+              <svg
+                class="h-4 w-4 text-accent-cyan"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+              </svg>
+              <span>Download Resume</span>
+            </a>
+          </div>
+
+          <!-- Social & Verification Links -->
+          <div class="mt-8 flex flex-wrap items-center gap-3 border-t border-slate-400/15 pt-6">
+            <span class="font-mono text-xs uppercase tracking-wider text-slate-400">
+              Verified Profiles:
+            </span>
+            {
+              socialLinks
+                .filter((s) => s.primary)
+                .map((social) => (
+                  <a
+                    href={social.url}
+                    target={social.url.startsWith('mailto:') ? undefined : '_blank'}
+                    rel={social.url.startsWith('mailto:') ? undefined : 'noopener noreferrer'}
+                    class="inline-flex items-center gap-1.5 rounded-lg border border-slate-400/15 bg-obsidian-800/80 px-3 py-1.5 font-mono text-xs text-slate-50 transition-all hover:border-accent-cyan/50 hover:text-accent-cyan"
+                  >
+                    <span>{social.label}</span>
+                  </a>
+                ))
+            }
+          </div>
+        </div>
+
+        <!-- Right Column: Executive Studio Portrait & Telemetry Frame -->
+        <div class="lg:col-span-5">
+          <div class="relative mx-auto max-w-sm lg:max-w-none">
+            <!-- Ambient Halo -->
+            <div
+              aria-hidden="true"
+              class="absolute -inset-3 rounded-3xl bg-gradient-to-tr from-accent-blue/25 via-accent-cyan/15 to-accent-violet/25 blur-2xl"
+            >
+            </div>
+
+            <div
+              class="glass-card-interactive relative overflow-hidden rounded-3xl border border-slate-400/20 p-5"
+            >
+              <div
+                class="mb-3 flex items-center justify-between border-b border-slate-400/15 pb-3 font-mono text-xs"
+              >
+                <span class="text-accent-cyan">IDENTITY // MOHAN_KUMAR_BN</span>
+                <span
+                  class="inline-flex items-center gap-1.5 rounded bg-accent-emerald/15 px-2 py-0.5 text-[10px] font-semibold text-accent-emerald"
+                >
+                  <span class="radar-dot h-1.5 w-1.5 rounded-full bg-accent-emerald"></span>
+                  <span>STATUS: ACTIVE</span>
+                </span>
+              </div>
+
+              <div
+                class="group relative overflow-hidden rounded-2xl border border-slate-400/15 bg-obsidian-900"
+              >
+                <div aria-hidden="true" class="portrait-scanline z-10"></div>
+                <picture>
+                  <source srcset="/images/mohan-portrait.webp" type="image/webp" />
+                  <img
+                    src="/images/mohan-portrait.png"
+                    alt="Mohan Kumar BN — Senior Platform Engineer and CNCF Certified Kubestronaut"
+                    width="386"
+                    height="404"
+                    loading="eager"
+                    decoding="async"
+                    fetchpriority="high"
+                    class="mx-auto h-auto w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                  />
+                </picture>
+                <div
+                  class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-obsidian-900 via-obsidian-900/85 to-transparent p-4"
+                >
+                  <p class="text-base font-bold text-slate-50">{profile.name}</p>
+                  <p class="font-mono text-xs text-accent-cyan">
+                    Senior Platform Engineer @ Henkel · Ex-OpsRamp / HPE
+                  </p>
+                </div>
+              </div>
+
+              <!-- Mini Credential Strip -->
+              <div class="mt-4 grid grid-cols-3 gap-2 text-center font-mono text-[11px]">
+                <div
+                  class="rounded-xl border border-slate-400/15 bg-obsidian-900/90 p-2.5 transition-all duration-200 hover:-translate-y-0.5 hover:border-accent-cyan/40"
+                >
+                  <p class="font-bold text-accent-cyan">Kubestronaut</p>
+                  <p class="text-[10px] text-slate-400">5x CNCF K8s</p>
+                </div>
+                <div
+                  class="rounded-xl border border-slate-400/15 bg-obsidian-900/90 p-2.5 transition-all duration-200 hover:-translate-y-0.5 hover:border-accent-blue/40"
+                >
+                  <p class="font-bold text-slate-50">GCP Architect</p>
+                  <p class="text-[10px] text-slate-400">&amp; Security Eng</p>
+                </div>
+                <div
+                  class="rounded-xl border border-slate-400/15 bg-obsidian-900/90 p-2.5 transition-all duration-200 hover:-translate-y-0.5 hover:border-accent-violet/40"
+                >
+                  <p class="font-bold text-accent-violet">AZ-400 / 104</p>
+                  <p class="text-[10px] text-slate-400">DevOps Expert</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Interactive Living Platform Visualization -->
+      <div class="mt-14">
+        <PlatformPipelineHero client:load />
+      </div>
+
+      <!-- Scroll Discovery Indicator -->
+      <div class="mt-10 flex justify-center">
+        <a
+          href="#verified-metrics"
+          aria-label="Scroll to explore platform metrics and case studies"
+          class="group inline-flex flex-col items-center gap-1.5 font-mono text-[11px] uppercase tracking-widest text-slate-400 transition-colors hover:text-accent-cyan"
+        >
+          <span>Scroll to Explore Platform Architecture</span>
+          <span class="inline-block animate-bounce text-accent-cyan">↓</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. VERIFIED METRICS & EXECUTIVE SUMMARY -->
+  <section id="verified-metrics" class="py-16 border-y border-slate-400/10 bg-obsidian-800/40">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+        {
+          profile.metrics.map((metric) => (
+            <div class="glass-card-interactive overflow-hidden rounded-2xl p-4 sm:p-5 text-left">
+              <p
+                class:list={[
+                  'font-mono font-extrabold tracking-tight text-accent-cyan break-words',
+                  metric.value.length > 8
+                    ? 'text-base sm:text-lg xl:text-xl'
+                    : 'text-xl sm:text-2xl',
+                ]}
+              >
+                {metric.value}
+              </p>
+              <p class="mt-1.5 text-sm font-bold text-slate-50">{metric.label}</p>
+              <p class="mt-1 text-xs leading-snug text-slate-400">{metric.detail}</p>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. CORE ENGINEERING EXPERTISE PREVIEW -->
+  <section class="py-20">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div class="flex flex-col justify-between gap-6 md:flex-row md:items-end">
+        <div>
+          <span class="section-badge">01 // CAPABILITY ECOSYSTEM</span>
+          <h2 class="mt-4 text-3xl font-bold tracking-tight text-slate-50 sm:text-4xl">
+            Enterprise Platform Engineering Domains
+          </h2>
+          <p class="mt-3 max-w-2xl text-base text-slate-400">
+            Production-validated expertise across container platforms, Internal Developer Platforms,
+            declarative GitOps, zero-trust security, and autonomous AI SRE operations.
+          </p>
+        </div>
+        <a href="/expertise" class="btn-secondary shrink-0">
+          <span>Interactive Capability Map</span>
+          <span>→</span>
+        </a>
+      </div>
+
+      <div class="mt-12 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {
+          skillDomains.slice(0, 6).map((domain) => (
+            <a
+              href={`/expertise#${domain.id}`}
+              class="glass-card-interactive group flex flex-col justify-between rounded-2xl p-6"
+            >
+              <div>
+                <div class="flex items-center justify-between">
+                  <span class="font-mono text-xs uppercase tracking-wider text-accent-cyan">
+                    {domain.skills.length} Core Technologies
+                  </span>
+                  <span class="font-mono text-xs text-slate-400 group-hover:text-accent-cyan">
+                    Explore →
+                  </span>
+                </div>
+                <h3 class="mt-3 text-xl font-bold text-slate-50 group-hover:text-accent-cyan transition-colors">
+                  {domain.title}
+                </h3>
+                <p class="mt-2 text-sm leading-relaxed text-slate-400">
+                  {domain.architecturalScope}
+                </p>
+              </div>
+
+              <div class="mt-6 flex flex-wrap gap-1.5 border-t border-slate-400/10 pt-4">
+                {domain.skills.map((skill) => (
+                  <span class="rounded-lg border border-slate-400/15 bg-obsidian-900/90 px-2.5 py-1 font-mono text-xs text-slate-50">
+                    {skill.name}
+                  </span>
+                ))}
+              </div>
+            </a>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. FEATURED ENGINEERING CASE STUDIES -->
+  <section class="py-20 bg-obsidian-800/30 border-y border-slate-400/10">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div class="flex flex-col justify-between gap-6 md:flex-row md:items-end">
+        <div>
+          <span class="section-badge">02 // ARCHITECTURAL CASE STUDIES</span>
+          <h2 class="mt-4 text-3xl font-bold tracking-tight text-slate-50 sm:text-4xl">
+            Systems Designed &amp; Problems Solved
+          </h2>
+          <p class="mt-3 max-w-2xl text-base text-slate-400">
+            In-depth architectural breakdowns of enterprise OpenShift platforms, Port self-service
+            IDPs, serverless GitOps pipelines, zero-trust secrets, and autonomous AI SRE agents.
+          </p>
+        </div>
+        <a href="/projects" class="btn-secondary shrink-0">
+          <span>View All {allProjects.length} Case Studies</span>
+          <span>→</span>
+        </a>
+      </div>
+
+      <div class="mt-12 grid grid-cols-1 gap-8 lg:grid-cols-2">
+        {
+          featuredProjects.map((project) => (
+            <article class="glass-card-interactive flex flex-col justify-between rounded-2xl p-7">
+              <div>
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                  <span class="rounded-lg border border-accent-blue/35 bg-accent-blue/10 px-3 py-1 font-mono text-xs font-semibold text-accent-cyan">
+                    {project.data.category}
+                  </span>
+                  <span class="font-mono text-xs text-slate-400">{project.data.role}</span>
+                </div>
+
+                <h3 class="mt-4 text-2xl font-bold text-slate-50">
+                  <a
+                    href={`/projects/${project.slug}`}
+                    class="hover:text-accent-cyan transition-colors"
+                  >
+                    {project.data.title}
+                  </a>
+                </h3>
+
+                <p class="mt-2.5 text-sm leading-relaxed text-slate-400">
+                  {project.data.problemStatement}
+                </p>
+
+                <div class="mt-5 grid grid-cols-3 gap-2.5 rounded-xl border border-slate-400/10 bg-obsidian-900/80 p-3.5">
+                  {project.data.outcomes.map((outcome) => (
+                    <div>
+                      <p class="font-mono text-xs sm:text-sm font-bold text-accent-emerald">
+                        {outcome.metric}
+                      </p>
+                      <p class="mt-0.5 text-[11px] text-slate-400 line-clamp-2">
+                        {outcome.description}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div class="mt-6">
+                <div class="flex flex-wrap gap-1.5">
+                  {project.data.technologies.slice(0, 6).map((tech) => (
+                    <span class="rounded-md border border-slate-400/15 bg-obsidian-900 px-2.5 py-1 font-mono text-[11px] text-slate-400">
+                      {tech}
+                    </span>
+                  ))}
+                </div>
+
+                <div class="mt-5 flex items-center justify-between border-t border-slate-400/15 pt-4">
+                  <a
+                    href={`/projects/${project.slug}`}
+                    class="inline-flex items-center gap-2 font-mono text-xs font-semibold text-accent-cyan hover:underline"
+                  >
+                    <span>Read Full Architecture Case Study</span>
+                    <span>→</span>
+                  </a>
+                  {project.data.githubUrl && (
+                    <a
+                      href={project.data.githubUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="font-mono text-xs text-slate-400 hover:text-slate-50"
+                    >
+                      GitHub Repo ↗
+                    </a>
+                  )}
+                </div>
+              </div>
+            </article>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. LATEST YOUTUBE MASTERCLASSES & TECHNICAL ARTICLES -->
+  <section class="py-20">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <!-- YouTube Section -->
+      <div class="flex flex-col justify-between gap-6 md:flex-row md:items-end">
+        <div>
+          <span class="section-badge">03 // MKBN-TECH VIDEO KNOWLEDGE HUB</span>
+          <h2 class="mt-4 text-3xl font-bold tracking-tight text-slate-50 sm:text-4xl">
+            Production Masterclasses on YouTube
+          </h2>
+          <p class="mt-3 max-w-2xl text-base text-slate-400">
+            Hands-on architecture walkthroughs covering zero-downtime OpenShift HA upgrades,
+            ephemeral Argo CD environments, corporate SSO/RBAC, and AI-driven Kubernetes
+            troubleshooting.
+          </p>
+        </div>
+        <a href="/videos" class="btn-secondary shrink-0">
+          <span>Explore All {videos.length} Videos</span>
+          <span>→</span>
+        </a>
+      </div>
+
+      <div class="mt-10 grid grid-cols-1 gap-6 md:grid-cols-3">
+        {
+          featuredVideos.map((video) => (
+            <article class="glass-card-interactive flex flex-col justify-between overflow-hidden rounded-2xl">
+              <div>
+                <a
+                  href={`/videos#${video.id}`}
+                  class="group relative block aspect-video overflow-hidden bg-obsidian-900"
+                >
+                  <img
+                    src={video.thumbnailUrl}
+                    alt={video.cleanTitle}
+                    width="480"
+                    height="360"
+                    loading="lazy"
+                    decoding="async"
+                    class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
+                  <div class="absolute inset-0 bg-gradient-to-t from-obsidian-900 via-obsidian-900/20 to-transparent" />
+                  <span class="absolute top-3 left-3 rounded-md bg-obsidian-900/90 px-2.5 py-1 font-mono text-[11px] font-semibold text-accent-cyan border border-accent-cyan/30">
+                    {video.category}
+                  </span>
+                  <span class="absolute bottom-3 right-3 rounded-md bg-accent-blue px-2.5 py-1 font-mono text-[11px] font-bold text-obsidian-900">
+                    ▶ Watch
+                  </span>
+                </a>
+
+                <div class="p-6">
+                  <div class="flex items-center justify-between font-mono text-xs text-slate-400">
+                    <time datetime={video.publishedAt}>{video.publishedAt}</time>
+                    <span>{video.duration}</span>
+                  </div>
+                  <h3 class="mt-2 text-lg font-bold text-slate-50">
+                    <a
+                      href={`/videos#${video.id}`}
+                      class="hover:text-accent-cyan transition-colors"
+                    >
+                      {video.cleanTitle}
+                    </a>
+                  </h3>
+                  <p class="mt-2 text-xs leading-relaxed text-slate-400 line-clamp-3">
+                    {video.description}
+                  </p>
+                </div>
+              </div>
+
+              <div class="px-6 pb-6 pt-2 flex items-center justify-between border-t border-slate-400/10">
+                <a
+                  href={video.youtubeUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="font-mono text-xs font-semibold text-accent-cyan hover:underline"
+                >
+                  Watch on YouTube ↗
+                </a>
+                {video.relatedProjectSlug && (
+                  <a
+                    href={`/projects/${video.relatedProjectSlug}`}
+                    class="font-mono text-xs text-slate-400 hover:text-slate-50"
+                  >
+                    Case Study →
+                  </a>
+                )}
+              </div>
+            </article>
+          ))
+        }
+      </div>
+
+      <!-- Technical Journal Articles -->
+      <div class="mt-20 flex flex-col justify-between gap-6 md:flex-row md:items-end">
+        <div>
+          <span class="section-badge">04 // TECHNICAL ENGINEERING JOURNAL</span>
+          <h2 class="mt-4 text-3xl font-bold tracking-tight text-slate-50 sm:text-4xl">
+            Selected Engineering Guides &amp; Articles
+          </h2>
+          <p class="mt-3 max-w-2xl text-base text-slate-400">
+            Step-by-step blueprints on bare-metal HA Kubernetes, RKE2 with Ansible,
+            Prometheus/Grafana/Loki observability, and AI-assisted Kubernetes operations.
+          </p>
+        </div>
+        <a href="/blog" class="btn-secondary shrink-0">
+          <span>Read All {allPosts.length} Articles</span>
+          <span>→</span>
+        </a>
+      </div>
+
+      <div class="mt-10 grid grid-cols-1 gap-6 md:grid-cols-3">
+        {
+          featuredPosts.map((post) => (
+            <article class="glass-card-interactive flex flex-col justify-between rounded-2xl p-6">
+              <div>
+                <div class="flex items-center justify-between font-mono text-xs text-slate-400">
+                  <span class="text-accent-cyan">{post.data.category}</span>
+                  <span>{post.data.readingTime}</span>
+                </div>
+                <h3 class="mt-3 text-xl font-bold text-slate-50">
+                  <a href={`/blog/${post.slug}`} class="hover:text-accent-cyan transition-colors">
+                    {post.data.title}
+                  </a>
+                </h3>
+                <p class="mt-2.5 text-sm leading-relaxed text-slate-400">{post.data.description}</p>
+              </div>
+
+              <div class="mt-6 flex items-center justify-between border-t border-slate-400/15 pt-4 font-mono text-xs">
+                <time datetime={post.data.publishedAt} class="text-slate-400">
+                  {post.data.publishedAt}
+                </time>
+                <a
+                  href={`/blog/${post.slug}`}
+                  class="font-semibold text-accent-cyan hover:underline"
+                >
+                  Read Blueprint →
+                </a>
+              </div>
+            </article>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- 6. VERIFIED CREDENTIALS & ENGINEERING PHILOSOPHY -->
+  <section class="py-20 bg-obsidian-800/30 border-y border-slate-400/10">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div class="flex flex-col justify-between gap-6 md:flex-row md:items-end">
+        <div>
+          <span class="section-badge">05 // VERIFIED ACCREDITATIONS</span>
+          <h2 class="mt-4 text-3xl font-bold tracking-tight text-slate-50 sm:text-4xl">
+            CNCF Kubestronaut &amp; Multi-Cloud Certifications
+          </h2>
+          <p class="mt-3 max-w-2xl text-base text-slate-400">
+            Every credential is independently verifiable on Credly—spanning CNCF Kubernetes (CKA,
+            CKS, CKAD, KCNA, KCSA, PCA), Google Cloud Architect &amp; Security, Microsoft Azure
+            DevOps Expert, and HashiCorp Terraform.
+          </p>
+        </div>
+        <a href="/certifications" class="btn-secondary shrink-0">
+          <span>View All {certifications.length} Verified Badges</span>
+          <span>→</span>
+        </a>
+      </div>
+
+      <div class="mt-10 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        {
+          spotlightCerts.map((cert) => (
+            <div class="glass-panel flex items-center gap-4 rounded-2xl p-5">
+              <img
+                src={cert.badgeUrl}
+                alt={cert.name}
+                width="68"
+                height="68"
+                loading="lazy"
+                decoding="async"
+                class="h-16 w-16 shrink-0 rounded-xl object-contain bg-obsidian-900/80 p-1.5 border border-slate-400/15"
+              />
+              <div class="min-w-0 flex-1">
+                <span class="font-mono text-[11px] font-semibold text-accent-cyan">
+                  {cert.provider} · {cert.issuedDate.slice(0, 4)}
+                </span>
+                <h3 class="mt-0.5 text-sm font-bold text-slate-50 truncate" title={cert.name}>
+                  {cert.name}
+                </h3>
+                <a
+                  href={cert.verificationUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="mt-1.5 inline-flex items-center gap-1 font-mono text-xs text-accent-emerald hover:underline"
+                >
+                  <span>✓ Verify on Credly</span>
+                  <span>↗</span>
+                </a>
+              </div>
+            </div>
+          ))
+        }
+      </div>
+
+      <!-- Engineering Philosophy Pillars -->
+      <div class="mt-20">
+        <span class="section-badge">06 // ARCHITECTURAL PRINCIPLES</span>
+        <h2 class="mt-4 text-3xl font-bold tracking-tight text-slate-50 sm:text-4xl">
+          Platform Engineering Philosophy
+        </h2>
+        <div class="mt-10 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+          {
+            profile.philosophy.map((item, idx) => (
+              <div class="glass-panel rounded-2xl p-6">
+                <span class="font-mono text-xs font-bold text-accent-cyan">
+                  PRINCIPLE 0{idx + 1}
+                </span>
+                <h3 class="mt-2 text-lg font-bold text-slate-50">{item.title}</h3>
+                <p class="mt-1 font-mono text-xs text-accent-violet">{item.principle}</p>
+                <p class="mt-3 text-sm leading-relaxed text-slate-400">{item.description}</p>
+              </div>
+            ))
+          }
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7. EXECUTIVE CONTACT CTA -->
+  <section class="py-24">
+    <div class="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+      <div
+        class="glass-panel relative overflow-hidden rounded-3xl border border-accent-blue/30 p-8 sm:p-12 text-center"
+      >
+        <div
+          aria-hidden="true"
+          class="pointer-events-none absolute -top-24 left-1/2 h-48 w-96 -translate-x-1/2 rounded-full bg-accent-blue/20 blur-3xl"
+        >
+        </div>
+        <span class="section-badge">READY FOR ENTERPRISE SCALE</span>
+        <h2 class="mt-5 text-3xl font-extrabold tracking-tight text-slate-50 sm:text-4xl">
+          Let’s Architect Resilient Cloud-Native Platforms
+        </h2>
+        <p class="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-slate-400">
+          Available for Senior / Staff / Principal Platform Engineering, Kubernetes &amp; Red Hat
+          OpenShift Architecture, SRE Leadership, and technical advisory conversations.
+        </p>
+        <div class="mt-8 flex flex-wrap items-center justify-center gap-4">
+          <a href="/contact" class="btn-primary">
+            <span>Get in Touch</span>
+            <span>→</span>
+          </a>
+          <a href={`mailto:${profile.primaryEmail}`} class="btn-secondary font-mono text-xs">
+            <span>{profile.primaryEmail}</span>
+          </a>
+          <a
+            href={profile.linkedinUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="btn-secondary"
+          >
+            <span>Connect on LinkedIn ↗</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

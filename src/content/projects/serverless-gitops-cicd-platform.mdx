@@ -1,0 +1,121 @@
+---
+title: 'Serverless GitOps CI/CD & Ephemeral PR Environments on OpenShift'
+subtitle: 'Kubernetes-native delivery with Tekton Pipelines, Argo CD ApplicationSets, and Knative Serverless across SNO and HA Production'
+category: 'GitOps & Serverless CI/CD'
+order: 3
+featured: true
+role: 'Platform Architect & Lead Engineer'
+environmentScope: 'OpenShift 4.22+ · Single-Node OpenShift (SNO) Staging & Multi-Node HA Production'
+problemStatement: 'Shared staging environments suffer from configuration collisions, broken test states, and slow feedback loops when multiple developers test pull requests simultaneously.'
+businessContext: 'Engineering teams needed a fully automated, Kubernetes-native CI/CD and GitOps platform capable of building container images without root daemons, spinning up isolated ephemeral preview environments for every Pull Request, and promoting immutable digests to HA production.'
+architectureSummary: 'Architected an end-to-end delivery platform combining OpenShift Pipelines (Tekton) for serverless CI, OpenShift GitOps (Argo CD) ApplicationSets with the Pull Request Generator for per-PR ephemeral namespaces, and Knative Serving for scale-to-zero microservice execution across SNO staging and HA multi-node production.'
+mermaidDiagram: |
+  flowchart LR
+    PR["Git Pull Request / Push\n(app-services)"] --> Tekton["OpenShift Pipelines (Tekton)\n(Build + Test + Image Scan)"]
+    Tekton --> Registry["Container Registry\n(Immutable Digest Push)"]
+    Tekton -->|"Update Digest"| GitOpsRepo["GitOps Repository\n(app-services-gitops)"]
+    PR -->|"PR Generator"| AppSet["Argo CD ApplicationSet\n(Ephemeral PR Environments)"]
+    GitOpsRepo --> ArgoProd["Argo CD Multi-Cluster Sync"]
+    AppSet --> Ephemeral["Isolated PR Namespace\n(pr-42.apps.cluster)"]
+    ArgoProd --> SNO["Single-Node OpenShift (SNO)\n(Staging Environment)"]
+    ArgoProd --> HAProd["HA Multi-Node OpenShift\n(Production Knative + K8s)"]
+topologyNodes:
+  - stage: '01 // Serverless CI'
+    component: 'OpenShift Pipelines (Tekton)'
+    detail: 'Event-driven Tekton EventListeners and Pipelines executing unit tests, rootless image builds, and vulnerability gates.'
+  - stage: '02 // Ephemeral Previews'
+    component: 'Argo CD PR ApplicationSet'
+    detail: 'Automatically provisions an isolated namespace and live HTTPS route for every open Pull Request, destroying it on merge.'
+  - stage: '03 // Staging Topology'
+    component: 'Single-Node OpenShift (SNO)'
+    detail: 'Cost-efficient staging footprint running Knative Serving scale-to-zero revisions and integration validation.'
+  - stage: '04 // HA Production'
+    component: 'Multi-Node OpenShift + Knative'
+    detail: 'Declarative Kustomize production overlays with PodDisruptionBudgets, HPA/KPA autoscaling, and zero-downtime traffic splitting.'
+keyDecisions:
+  - decision: 'Use Argo CD ApplicationSet Pull Request Generator for ephemeral environments instead of shared staging branches'
+    rationale: 'Gives every pull request its own isolated Kubernetes namespace, database instance, and live OpenShift Route URL, eliminating staging queues and merge conflicts.'
+    tradeoff: 'Requires Kustomize/Helm parameterization of hostnames and resource limits so ephemeral namespaces stay lightweight.'
+  - decision: 'Standardize on OpenShift Pipelines (Tekton) and Knative Serving'
+    rationale: 'Both Tekton and Knative run natively as Kubernetes CRDs on OpenShift, scaling to zero when idle and eliminating dedicated CI server maintenance.'
+    tradeoff: 'Initial cold-start latency on PVC workspace binding mitigated via shared volume claim templates.'
+securityConsiderations:
+  - 'Rootless container builds executed inside unprivileged OpenShift pods under restricted Security Context Constraints.'
+  - 'Strict separation between application source repository (app-services) and declarative deployment state repository (app-services-gitops).'
+  - 'Immutable SHA-256 image digest pinning across staging and production overlays.'
+reliabilityConsiderations:
+  - 'Automated cleanup (`prune: true`) in Argo CD ApplicationSets ensures closed PR namespaces never leak cluster resources.'
+  - 'Multi-node HA production overlay enforces anti-affinity, readiness/liveness probes, and Knative revision traffic splitting.'
+outcomes:
+  - metric: 'Per-PR Previews'
+    description: 'Instant isolated Kubernetes preview environments provisioned automatically on Pull Request creation and pruned on merge.'
+  - metric: 'Zero Idle Cost'
+    description: 'Serverless Tekton CI pipelines and Knative Serving workloads scale to zero when inactive.'
+  - metric: '100% Declarative'
+    description: 'End-to-end promotion from git commit to SNO staging and HA production managed entirely via GitOps.'
+technologies:
+  - 'OpenShift 4'
+  - 'OpenShift GitOps (Argo CD)'
+  - 'OpenShift Pipelines (Tekton)'
+  - 'Knative Serverless'
+  - 'Kustomize'
+  - 'Helm'
+  - 'Single-Node OpenShift (SNO)'
+  - 'GitLab / GitHub'
+githubUrl: 'https://github.com/mkbntech/app-services-gitops'
+relatedVideoUrl: 'https://www.youtube.com/watch?v=CmrsAaxZrPM'
+relatedVideoTitle: 'Zero to Production: A Complete GitOps CI/CD Platform on OpenShift!'
+---
+
+## Engineering Challenge
+
+Traditional CI/CD pipelines often rely on imperative `kubectl apply` scripts from a central CI server and bottleneck on a single shared `staging` namespace. When multiple engineers push changes concurrently, staging becomes unstable, and production promotions lack an auditable declarative trail.
+
+## Solution Architecture
+
+We architected a two-repository GitOps delivery system demonstrated through the **Trailhead Supply Co.** (`app-services` and `app-services-gitops`) and **Finance API** (`finance-api` and `finance-api-ops`) reference platforms:
+
+### 1. Ephemeral Pull Request Environments with Argo CD ApplicationSets
+
+Instead of queuing on a shared staging environment, opening a Pull Request triggers the **Argo CD Pull Request Generator**:
+
+```yaml
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: preview-environments
+  namespace: openshift-gitops
+spec:
+  generators:
+    - pullRequest:
+        github:
+          owner: mkbntech
+          repo: app-services
+          labels: ['preview']
+        requeueAfterSeconds: 60
+  template:
+    metadata:
+      name: 'app-preview-pr-{{number}}'
+    spec:
+      project: default
+      source:
+        repoURL: 'https://github.com/mkbntech/app-services-gitops.git'
+        targetRevision: HEAD
+        path: overlays/preview
+      destination:
+        server: 'https://kubernetes.default.svc'
+        namespace: 'preview-pr-{{number}}'
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+```
+
+### 2. Multi-Cluster Promotion (SNO Staging → HA Production)
+
+Once the PR is validated and merged:
+
+1. **Tekton (OpenShift Pipelines)** builds the immutable OCI container image, runs automated test suites, pushes the digest to the registry, and commits the updated SHA digest to `app-services-gitops`.
+2. **Argo CD** automatically reconciles the **Single-Node OpenShift (SNO)** staging environment and the **HA Multi-Node OpenShift** production environment using environment-specific Kustomize overlays.

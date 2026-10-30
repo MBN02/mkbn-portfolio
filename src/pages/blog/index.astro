@@ -1,0 +1,62 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import BlogExplorer from '@/components/blog/BlogExplorer';
+import { getCollection } from 'astro:content';
+import { profile } from '@/data/profile';
+
+const allPosts = await getCollection('blog');
+const sortedPosts = allPosts
+  .sort((a, b) => new Date(b.data.publishedAt).getTime() - new Date(a.data.publishedAt).getTime())
+  .map((entry) => ({
+    slug: entry.slug,
+    title: entry.data.title,
+    description: entry.data.description,
+    publishedAt: entry.data.publishedAt,
+    category: entry.data.category,
+    tags: entry.data.tags,
+    readingTime: entry.data.readingTime,
+    featured: entry.data.featured,
+    canonicalUrl: entry.data.canonicalUrl,
+    youtubeVideoId: entry.data.youtubeVideoId,
+  }));
+---
+
+<BaseLayout
+  title="Technical Engineering Journal & Cloud-Native Blueprints"
+  description="Technical engineering articles and hands-on guides by Mohan Kumar BN — covering HA Kubernetes, RKE2 with Ansible, Ceph & Longhorn storage, Prometheus/Grafana/Loki observability, and AI-driven Kubernetes SRE."
+>
+  <section class="py-14 sm:py-20">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div class="flex flex-col justify-between gap-6 md:flex-row md:items-end">
+        <div class="max-w-3xl">
+          <span class="section-badge">BLOG // TECHNICAL ENGINEERING JOURNAL</span>
+          <h1 class="mt-4 text-4xl font-extrabold tracking-tight text-slate-50 sm:text-5xl">
+            Platform Engineering Blueprints &amp; Guides
+          </h1>
+          <p class="mt-4 text-base sm:text-lg leading-relaxed text-slate-400">
+            Production-focused tutorials, architecture patterns, and automation guides authored by {
+              profile.name
+            } and cross-published with <a
+              href={profile.blogDomain}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="text-accent-cyan underline">mkbntech.com</a
+            >.
+          </p>
+        </div>
+        <a
+          href={profile.blogDomain}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="btn-secondary shrink-0 text-xs"
+        >
+          <span>Visit MKBN-Tech Docs Site ↗</span>
+        </a>
+      </div>
+
+      <div class="mt-10">
+        <BlogExplorer client:load posts={sortedPosts} />
+      </div>
+    </div>
+  </section>
+</BaseLayout>

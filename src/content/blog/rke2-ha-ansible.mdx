@@ -1,0 +1,76 @@
+---
+title: 'RKE2 High-Availability Cluster Installation With Ansible'
+description: 'Automate the provisioning of a security-hardened, CIS-compliant Rancher RKE2 High-Availability Kubernetes cluster on Ubuntu nodes using idempotent Ansible playbooks.'
+publishedAt: '2025-12-24'
+category: 'Kubernetes'
+tags: ['kubernetes', 'rke2', 'ansible', 'high-availability', 'security']
+readingTime: '9 min read'
+featured: true
+canonicalUrl: 'https://www.mkbntech.com/posts/rke2-ha-ansible/'
+youtubeVideoId: 'zvY70Rw4f3U'
+githubRepoUrl: 'https://github.com/mkbntech/rke2-ha-setup-ansible'
+architectureDiagram: |
+  flowchart LR
+    Ansible["Ansible Control Node\n(Playbooks + Inventory)"] --> VIP["Keepalived + HAProxy VIP\n(Port 6443 & 9345)"]
+    Ansible --> M1["RKE2 Server 01\n(Control Plane + etcd)"]
+    Ansible --> M2["RKE2 Server 02\n(Control Plane + etcd)"]
+    Ansible --> M3["RKE2 Server 03\n(Control Plane + etcd)"]
+    Ansible --> W["RKE2 Agent Nodes\n(Worker Pool)"]
+    VIP --> M1 & M2 & M3
+---
+
+## Why Rancher RKE2 for Enterprise Kubernetes?
+
+**RKE2** (Rancher Government / Enterprise Kubernetes Engine 2) combines the usability of RKE1 with the lightweight containerd architecture of K3s. Unlike vanilla distributions, RKE2 ships hardened out of the box to pass **CIS Kubernetes Benchmark** profiles and supports FIPS 140-2 cryptographic modules.
+
+## Cluster Topology
+
+- **Load Balancer VIP**: Floating Virtual IP routing supervisor port `9345` (node registration) and Kubernetes API port `6443`.
+- **3x RKE2 Server Nodes**: Stacked etcd + control-plane quorum on Ubuntu 24.04 LTS.
+- **RKE2 Agent Nodes**: Dedicated worker nodes running hardened containerd and Canal/Calico CNI.
+
+## Automating RKE2 Bootstrap with Ansible
+
+### 1. Inventory Layout (`inventory/hosts.ini`)
+
+```ini
+[rke2_servers]
+rke2-master-01 ansible_host=192.168.10.21 rke2_Init=true
+rke2-master-02 ansible_host=192.168.10.22
+rke2-master-03 ansible_host=192.168.10.23
+
+[rke2_agents]
+rke2-worker-01 ansible_host=192.168.10.31
+rke2-worker-02 ansible_host=192.168.10.32
+
+[rke2_cluster:children]
+rke2_servers
+rke2_agents
+```
+
+### 2. RKE2 Server Configuration Template (`config.yaml.j2`)
+
+```yaml
+write-kubeconfig-mode: '0640'
+tls-san:
+  - '{{ rke2_api_vip }}'
+  - 'rke2-api.mkbn.local'
+cni:
+  - canal
+profile: 'cis'
+disable:
+  - rke2-ingress-nginx
+```
+
+### 3. Executing the Playbook & Verifying Quorum
+
+```bash
+# Execute the idempotent RKE2 HA Ansible playbook
+ansible-playbook -i inventory/hosts.ini site.yml
+
+# Verify RKE2 Server & Agent readiness
+export KUBECONFIG=/etc/rancher/rke2/rke2.yaml
+/var/lib/rancher/rke2/bin/kubectl get nodes -o wide
+```
+
+Every control-plane node registers cleanly against the VIP on port `9345`, forming a fault-tolerant 3-node etcd cluster ready for Rancher or Argo CD onboarding.

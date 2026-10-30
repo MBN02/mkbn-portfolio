@@ -1,0 +1,43 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import VideoHub from '@/components/videos/VideoHub';
+import { videos } from '@/data/videos';
+import { profile } from '@/data/profile';
+---
+
+<BaseLayout
+  title="MKBN-Tech Video Knowledge Hub — OpenShift, Kubernetes & GitOps Tutorials"
+  description="Technical YouTube library of Mohan Kumar BN (@mkbn-tech) — 700+ subscribers and 45K+ views covering Red Hat OpenShift HA upgrades, Argo CD ephemeral environments, Corporate SSO, Ceph storage, and AI SRE."
+>
+  <section class="py-14 sm:py-20">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div class="flex flex-col justify-between gap-6 md:flex-row md:items-end">
+        <div class="max-w-3xl">
+          <span class="section-badge">VIDEOS // MKBN-TECH KNOWLEDGE HUB</span>
+          <h1 class="mt-4 text-4xl font-extrabold tracking-tight text-slate-50 sm:text-5xl">
+            Production Kubernetes &amp; OpenShift Video Library
+          </h1>
+          <p class="mt-4 text-base sm:text-lg leading-relaxed text-slate-400">
+            Hands-on technical masterclasses and rapid architecture insights from the <strong
+              class="text-slate-50">MKBN-Tech YouTube Channel</strong
+            > (<strong class="text-accent-cyan">700+ subscribers · 45K+ views</strong>). All video
+            players use privacy-enhanced click-to-load embeds.
+          </p>
+        </div>
+
+        <a
+          href={profile.youtubeUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="btn-primary shrink-0 text-xs"
+        >
+          <span>Subscribe on YouTube (@mkbn-tech) ↗</span>
+        </a>
+      </div>
+
+      <div class="mt-10">
+        <VideoHub client:load videos={videos} channelUrl={profile.youtubeUrl} />
+      </div>
+    </div>
+  </section>
+</BaseLayout>

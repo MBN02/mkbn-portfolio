@@ -1,0 +1,93 @@
+---
+title: 'Self-Service Internal Developer Platform (IDP) with Port & OpenShift GitOps'
+subtitle: 'Transforming ticket-driven platform operations into automated golden paths and declarative GitOps workflows'
+category: 'Internal Developer Platform'
+order: 2
+featured: true
+role: 'Senior Platform Engineer — IDP Architect & Automation Lead'
+environmentScope: 'Enterprise Multi-Tenant Red Hat OpenShift & GitOps Ecosystem'
+problemStatement: 'Application teams faced multi-day lead times waiting on manual platform-team tickets for namespace provisioning, quota adjustments, RBAC onboarding, and environment creation—creating friction for developers and repetitive toil for platform engineers.'
+businessContext: 'To scale platform adoption across dozens of engineering teams without linearly increasing platform headcount, we needed an Internal Developer Platform that offered self-service velocity while automatically enforcing enterprise security and governance guardrails.'
+architectureSummary: 'Built an Internal Developer Platform using Port as the developer portal and software catalog, wired to automated GitLab/GitOps workflows and OpenShift APIs. Developers request resources through standardized self-service actions that generate validated Helm/Kustomize configurations reconciled by OpenShift GitOps (Argo CD).'
+mermaidDiagram: |
+  flowchart LR
+    Dev["Application Engineer\n(Self-Service Request)"] --> Port["Port Internal Developer Portal\n(Catalog + Scorecards + Actions)"]
+    Port -->|"Webhook / Automation"| Pipeline["GitLab CI / Automation Engine\n(Policy & Quota Validation)"]
+    Pipeline -->|"Commit Declarative PR"| Git["GitOps Config Repository\n(Helm / Kustomize Overlays)"]
+    Git -->|"Continuous Reconciliation"| Argo["OpenShift GitOps (Argo CD)"]
+    Argo --> Tenant["Multi-Tenant OpenShift Namespace\n(RBAC + NetworkPolicy + Quota + ESO)"]
+    Tenant -->|"Live State Sync"| Port
+topologyNodes:
+  - stage: '01 // Developer Portal'
+    component: 'Port Software Catalog'
+    detail: 'Unified catalog modeling services, environments, OpenShift namespaces, owners, and production-readiness scorecards.'
+  - stage: '02 // Self-Service Action'
+    component: 'Standardized Golden Paths'
+    detail: 'Guided forms for namespace onboarding, quota scaling, and secret store binding with built-in schema validation.'
+  - stage: '03 // GitOps Engine'
+    component: 'OpenShift GitOps (Argo CD)'
+    detail: 'Declarative reconciliation of tenant namespaces, LimitRanges, ResourceQuotas, RoleBindings, and NetworkPolicies.'
+  - stage: '04 // Continuous Governance'
+    component: 'Production Readiness Scorecards'
+    detail: 'Automated checks verifying health probes, Vault secret externalization, backup labels, and resource limits.'
+keyDecisions:
+  - decision: 'Back all Port IDP self-service actions with GitOps commits rather than direct imperative kubectl/oc API mutations'
+    rationale: 'Direct imperative API calls create configuration drift and bypass audit trails. Generating a Git commit ensures every self-service action is versioned, auditable, and recoverable.'
+    tradeoff: 'Adds a brief 30–60 second GitOps sync interval compared to direct API mutation, which is well worth the auditability and zero-drift guarantee.'
+  - decision: 'Embed automated governance guardrails directly into the golden-path templates'
+    rationale: 'Developers should not have to write complex NetworkPolicies, SCC bindings, or ExternalSecret CRDs from scratch.'
+    tradeoff: 'Requires maintaining versioned platform chart/kustomize templates as cluster capabilities evolve.'
+securityConsiderations:
+  - 'Every self-service namespace automatically provisions default-deny ingress/egress NetworkPolicies and least-privilege group RoleBindings.'
+  - 'Pre-configured External Secrets Operator (ESO) SecretStore bindings ensure new services consume dynamic credentials from HashiCorp Vault from day one.'
+  - 'ResourceQuotas and LimitRanges are mandatory parameters in every tenant blueprint to prevent cluster resource exhaustion.'
+reliabilityConsiderations:
+  - 'Port Scorecards continuously evaluate workload manifests for liveness/readiness probes, PodDisruptionBudgets, and Veeam Kasten backup policy labels.'
+  - 'Eliminated manual copy-paste configuration errors across Dev, QA, Staging, and Production environments.'
+outcomes:
+  - metric: 'Self-Service'
+    description: 'Replaced manual ticket queues for namespace provisioning and application onboarding with automated Port IDP workflows.'
+  - metric: '100% Auditable'
+    description: 'All tenant infrastructure and RBAC changes flow through version-controlled OpenShift GitOps repositories.'
+  - metric: 'Zero Toil'
+    description: 'Standardized golden paths eliminated repetitive day-2 platform provisioning tasks and configuration inconsistencies.'
+technologies:
+  - 'Port IDP'
+  - 'Red Hat OpenShift'
+  - 'OpenShift GitOps (Argo CD)'
+  - 'GitLab CI/CD'
+  - 'Helm'
+  - 'Kustomize'
+  - 'HashiCorp Vault'
+  - 'External Secrets Operator'
+  - 'Python & REST APIs'
+githubUrl: 'https://github.com/mkbntech/finance-api-ops'
+relatedVideoUrl: 'https://www.youtube.com/watch?v=0Rs1mMiFTBI'
+relatedVideoTitle: 'How Modern Platform Teams ACTUALLY Deploy to Kubernetes'
+---
+
+## Engineering Problem
+
+In many enterprise organizations, adopting Kubernetes or OpenShift shifts the bottleneck from hardware provisioning to **platform ticket queues**. Application developers open tickets to request a namespace, wait for security teams to approve RBAC groups, wait again for firewall/NetworkPolicy rules, and manually copy YAML manifests between environments.
+
+Our objective was to treat the **platform as a product** by building an **Internal Developer Platform (IDP)** using **Port** that gives developers immediate self-service autonomy while guaranteeing enterprise compliance by construction.
+
+## Solution Architecture & Golden Paths
+
+### 1. Software Catalog & Entity Modeling in Port
+
+We modeled the enterprise platform topology inside Port across four core blueprints:
+
+- **System / Application**: Business service metadata, owning squad, Git repository, and criticality tier.
+- **Cluster & Environment**: Production and non-production OpenShift clusters (SNO staging, multi-node HA prod).
+- **Tenant Namespace**: Mapped live from OpenShift with real-time CPU/memory quota utilization, active SCC profile, and Argo CD sync status.
+- **Production Readiness Scorecard**: Automated rule evaluation tracking whether workloads define health probes, non-root security contexts, Vault ExternalSecrets, and Kasten backup labels.
+
+### 2. GitOps-Backed Self-Service Workflows
+
+When an engineer triggers **"Provision Application Environment"** or **"Request Quota Expansion"** in Port:
+
+1. Port validates the payload against team ownership and tier policies.
+2. A webhook triggers our automation pipeline, which scaffolds or updates a standardized **Kustomize overlay / Helm values** set in the GitOps repository.
+3. **OpenShift GitOps (Argo CD)** reconciles the target cluster, provisioning the `Namespace`, `ResourceQuota`, `LimitRange`, `NetworkPolicy`, `RoleBinding`, and `SecretStore` atomically.
+4. Status updates stream back to Port so the developer sees their live environment URL and health status within seconds.

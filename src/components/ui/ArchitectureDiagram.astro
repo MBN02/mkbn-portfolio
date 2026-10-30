@@ -1,0 +1,68 @@
+---
+interface TopologyNode {
+  stage: string;
+  component: string;
+  detail: string;
+}
+
+interface Props {
+  title?: string;
+  mermaidCode: string;
+  nodes?: TopologyNode[];
+}
+
+const {
+  title = 'System Architecture & Control-Plane Topology',
+  mermaidCode,
+  nodes = [],
+} = Astro.props;
+---
+
+<div class="glass-panel rounded-2xl p-6 sm:p-8">
+  <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-400/15 pb-4">
+    <div class="flex items-center gap-2.5">
+      <span class="h-2.5 w-2.5 rounded-full bg-accent-cyan"></span>
+      <h3 class="font-mono text-xs font-semibold uppercase tracking-wider text-slate-50">
+        {title}
+      </h3>
+    </div>
+    <span
+      class="rounded-md border border-accent-blue/30 bg-obsidian-900/80 px-2.5 py-1 font-mono text-[11px] text-accent-cyan"
+    >
+      TOPOLOGY // DECLARATIVE BLUEPRINT
+    </span>
+  </div>
+
+  {
+    nodes.length > 0 && (
+      <div class="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {nodes.map((node, index) => (
+          <div class="relative rounded-xl border border-slate-400/15 bg-obsidian-900/80 p-4 transition-colors hover:border-accent-cyan/40">
+            <div class="flex items-center justify-between font-mono text-[11px] text-accent-cyan">
+              <span>{node.stage}</span>
+              <span class="text-slate-400">0{index + 1}</span>
+            </div>
+            <p class="mt-2 text-sm font-bold text-slate-50">{node.component}</p>
+            <p class="mt-1.5 text-xs leading-relaxed text-slate-400">{node.detail}</p>
+          </div>
+        ))}
+      </div>
+    )
+  }
+
+  <details
+    class="group mt-6 rounded-xl border border-slate-400/15 bg-obsidian-900/90"
+    open={nodes.length === 0}
+  >
+    <summary
+      class="flex cursor-pointer items-center justify-between px-4 py-3 font-mono text-xs text-slate-400 hover:text-slate-50"
+    >
+      <span>Mermaid Topology Specification (Architecture-as-Code)</span>
+      <span class="text-accent-cyan group-open:rotate-180 transition-transform">▼</span>
+    </summary>
+    <div class="border-t border-slate-400/10 p-4 overflow-x-auto">
+      <pre
+        class="font-mono text-xs leading-relaxed text-accent-cyan/90"><code>{mermaidCode.trim()}</code></pre>
+    </div>
+  </details>
+</div>

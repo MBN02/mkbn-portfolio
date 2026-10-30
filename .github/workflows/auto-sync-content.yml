@@ -1,0 +1,64 @@
+name: Auto-Sync YouTube & MKBN-Tech Blog Content
+
+on:
+  # 1. Runs automatically every 6 hours to detect new YouTube uploads or mkbntech.com posts
+  schedule:
+    - cron: '0 */6 * * *'
+  # 2. Allows instant manual one-click trigger from the GitHub Actions tab
+  workflow_dispatch:
+  # 3. Allows external webhook trigger (e.g. from your mkbntech.com repository on push)
+  repository_dispatch:
+    types: [content-updated]
+
+permissions:
+  contents: write
+
+jobs:
+  sync-and-publish:
+    name: Fetch Feeds, Validate Schema & Commit Updates
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Sync latest YouTube videos (@mkbn-tech) & Blog posts (mkbntech.com)
+        run: npm run sync:content
+
+      - name: Format & verify changes
+        id: git_check
+        run: |
+          if [[ -n "$(git status --porcelain src/data/videos.ts src/content/blog/)" ]]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            npm run format
+            npm run test:unit
+            npm run build
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Commit and push new content (triggers Cloudflare Pages deploy)
+        if: steps.git_check.outputs.changed == 'true'
+        run: |
+          git config user.name "mkbn-content-bot"
+          git config user.email "mkbntech@gmail.com"
+          git add src/data/videos.ts src/content/blog/
+          git commit -m "chore(content): auto-sync latest YouTube videos and MKBN-Tech blog posts"
+          git push origin HEAD:main
+
+      - name: Optional — Trigger Cloudflare Pages Deploy Hook directly
+        if: steps.git_check.outputs.changed == 'true' && env.CLOUDFLARE_DEPLOY_HOOK_URL != ''
+        env:
+          CLOUDFLARE_DEPLOY_HOOK_URL: ${{ secrets.CLOUDFLARE_DEPLOY_HOOK_URL }}
+        run: |
+          curl -fsSL -X POST "$CLOUDFLARE_DEPLOY_HOOK_URL"

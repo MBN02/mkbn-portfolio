@@ -1,0 +1,41 @@
+---
+title: 'Meet Longhorn: Cloud-Native Distributed Block Storage for Kubernetes'
+description: 'Deploy SUSE Longhorn on Kubernetes to provide synchronously replicated, self-healing persistent block volumes with automated snapshots and stateful workload resilience.'
+publishedAt: '2025-11-06'
+category: 'Storage & Networking'
+tags: ['longhorn', 'kubernetes', 'storage', 'csi', 'high-availability']
+readingTime: '7 min read'
+featured: false
+canonicalUrl: 'https://www.mkbntech.com/posts/longhorn-deploy/'
+youtubeVideoId: 'ts7LAnM744Y'
+githubRepoUrl: 'https://github.com/mkbntech/longhorn'
+---
+
+## Why Longhorn for Kubernetes Stateful Workloads?
+
+**Longhorn** is a lightweight, reliable, and CNCF-graduated distributed block storage system for Kubernetes. It partitions block storage into isolated Longhorn Engine and Replica instances using container and microservice primitives, replicating every `PersistentVolume` across multiple worker nodes.
+
+## Prerequisites & Node Preparation
+
+Ensure `open-iscsi` and `nfs-common` are installed and active across all Kubernetes worker nodes:
+
+```bash
+sudo apt-get update && sudo apt-get install -y open-iscsi nfs-common
+sudo systemctl enable --now iscsid
+```
+
+## Installing Longhorn via Helm
+
+```bash
+helm repo add longhorn https://charts.longhorn.io
+helm repo update
+
+helm install longhorn longhorn/longhorn \
+  --namespace longhorn-system \
+  --create-namespace \
+  --set defaultSettings.defaultReplicaCount=3
+```
+
+## Validating Dynamic Provisioning
+
+Once `kubectl get sc` shows `longhorn (default)`, any `PersistentVolumeClaim` automatically provisions a 3-replica block volume across distinct worker nodes, ensuring zero data loss if a worker host fails.
