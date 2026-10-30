@@ -152,10 +152,7 @@
     box-shadow:
       0 6px 24px 0 rgba(0, 0, 0, 0.35),
       inset 0 1px 0 0 rgba(255, 255, 255, 0.06);
-    transform: perspective(1000px)
-      rotateX(var(--rx, 0deg))
-      rotateY(var(--ry, 0deg))
-      translateY(0);
+    transform: perspective(1000px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) translateY(0);
     transition:
       transform 260ms cubic-bezier(0.22, 1, 0.36, 1),
       border-color 260ms ease,
@@ -164,9 +161,7 @@
   }
 
   .glass-card-interactive:hover {
-    transform: perspective(1000px)
-      rotateX(var(--rx, 0deg))
-      rotateY(var(--ry, 0deg))
+    transform: perspective(1000px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg))
       translateY(-5px);
     border-color: rgba(34, 211, 238, 0.45);
     box-shadow:
@@ -190,12 +185,7 @@
     inset-y: 0;
     left: 0;
     width: 45%;
-    background: linear-gradient(
-      90deg,
-      transparent,
-      rgba(255, 255, 255, 0.38),
-      transparent
-    );
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.38), transparent);
     transform: translateX(-140%) skewX(-18deg);
     transition: transform 650ms cubic-bezier(0.22, 1, 0.36, 1);
     pointer-events: none;
@@ -240,12 +230,7 @@
     inset-x: 0;
     top: 0;
     height: 28%;
-    background: linear-gradient(
-      to bottom,
-      transparent,
-      rgba(34, 211, 238, 0.07),
-      transparent
-    );
+    background: linear-gradient(to bottom, transparent, rgba(34, 211, 238, 0.07), transparent);
     pointer-events: none;
     animation: scanline-sweep 6.5s ease-in-out infinite;
   }

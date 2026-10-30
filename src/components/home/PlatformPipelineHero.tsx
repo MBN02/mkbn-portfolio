@@ -327,9 +327,7 @@ export default function PlatformPipelineHero() {
                   <span className={isSelected ? 'text-accent-emerald' : 'text-slate-400'}>
                     ● {stage.latencyOrMetric}
                   </span>
-                  <span className="text-accent-cyan">
-                    {isSelected ? 'ACTIVE' : 'INSPECT →'}
-                  </span>
+                  <span className="text-accent-cyan">{isSelected ? 'ACTIVE' : 'INSPECT →'}</span>
                 </div>
               </button>
             );
