@@ -601,4 +601,23 @@ export const videos: VideoItem[] = [
     thumbnailUrl: 'https://i.ytimg.com/vi/rGPic_f-DUQ/hqdefault.jpg',
     featured: false,
   },
+  {
+    id: 'the-complete-guide-to-opentelemetry-on-openshift-zero-co',
+    videoId: 'gFB9gD27hZk',
+    title: 'The Complete Guide to OpenTelemetry on OpenShift Zero Code Auto Instrumentation!',
+    cleanTitle: 'The Complete Guide to OpenTelemetry on OpenShift Zero Code Auto Instrumentation',
+    publishedAt: '2026-11-21',
+    category: 'Red Hat OpenShift',
+    format: 'masterclass',
+    duration: 'Technical Walkthrough',
+    description:
+      'In this video, we set up zero-code distributed tracing across a multi-language application on Red Hat OpenShift using the OpenTelemetry Operator and Red Hat build of Tempo.',
+    keyTakeaways: [
+      'Red Hat OpenShift architecture & hands-on implementation',
+      'Production-ready patterns from MKBN-Tech',
+    ],
+    youtubeUrl: 'https://www.youtube.com/watch?v=gFB9gD27hZk',
+    thumbnailUrl: 'https://i.ytimg.com/vi/gFB9gD27hZk/hqdefault.jpg',
+    featured: false,
+  },
 ].map((item) => VideoItemSchema.parse(item));
